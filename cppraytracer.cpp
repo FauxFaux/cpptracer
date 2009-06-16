@@ -38,7 +38,7 @@ void setupScene();
 RGBA* startRender(const int width, const int height, int numThreads);
 void writeBitmap(RGBA* pixelData, const int screenWidth, const int screenHeight);
 
-#ifndef _WINDOWS
+#ifndef _WIN32
 # include <ctime>
 #else
 # include <windows.h>
@@ -46,7 +46,7 @@ void writeBitmap(RGBA* pixelData, const int screenWidth, const int screenHeight)
 
 struct timer
 {
-#ifndef _WINDOWS
+#ifndef _WIN32
 	clock_t start;
 	timer() : start(clock())
 	{
@@ -54,11 +54,28 @@ struct timer
 
 	~timer()
 	{
-		std::cout << static_cast<float>(clock()-start)/CLOCKS_PER_SEC << std::endl;	
+		output(static_cast<double>(clock()-start)/CLOCKS_PER_SEC);
 	}
 #else
-#	error no timer
+	LARGE_INTEGER start;
+	timer()
+	{
+		QueryPerformanceCounter(&start);
+	}
+
+	~timer()
+	{
+		LARGE_INTEGER end, freq;
+		QueryPerformanceCounter(&end);
+		QueryPerformanceFrequency(&freq);
+		output(static_cast<double>(end.QuadPart-start.QuadPart)/freq.QuadPart);	
+	}
 #endif
+
+	void output(double seconds)
+	{
+		std::cout << seconds * 1000 << "ms" << std::endl;	
+	}
 };
 
 int main(int argc, char *argv[])

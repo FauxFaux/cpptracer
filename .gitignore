@@ -1,1 +1,7 @@
 a.out
+*.ncb
+*.suo
+*.user
+x64
+Debug
+Release
