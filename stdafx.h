@@ -12,6 +12,12 @@
 #include <xmmintrin.h>
 #include <iomanip>
 
+#ifdef _WINDOWS
+# define asFloatArray(x) ((x).m128_f32)
+#else
+# define asFloatArray(x) ((float*)(&x))
+#endif
+
 
 typedef __m128 SSEInt;
 typedef unsigned char uchar;

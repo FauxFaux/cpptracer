@@ -74,7 +74,7 @@ SSEInt RTSphere::IntersectTest(const Ray& rays) const
 
 	for(int r = 0; r < 4; r++)
 	{
-		if(d.m128_f32[r] >= 0)
+		if(asFloatArray(d)[r] >= 0)
 			each[r] = false;
 		else
 			each[r] = true;
@@ -92,9 +92,9 @@ SSEInt RTSphere::IntersectTest(const Ray& rays) const
 	{
 		if(!each[r])
 		{
-			t.m128_f32[r] = (-d.m128_f32[r] - b.m128_f32[r]) * a.m128_f32[r];
+			asFloatArray(t)[r] = (-asFloatArray(d)[r] - asFloatArray(b)[r]) * asFloatArray(a)[r];
 
-			if(t.m128_f32[r] >= 0)
+			if(asFloatArray(t)[r] >= 0)
 				each[r] = true;
 		}
 	}
@@ -106,9 +106,9 @@ SSEInt RTSphere::IntersectTest(const Ray& rays) const
 	{
 		if(!each[r])
 		{
-			t.m128_f32[r] = (d.m128_f32[r] - b.m128_f32[r]) * a.m128_f32[r];
+			asFloatArray(t)[r] = (asFloatArray(d)[r] - asFloatArray(b)[r]) * asFloatArray(a)[r];
 
-			if(t.m128_f32[r] >= 0)
+			if(asFloatArray(t)[r] >= 0)
 				each[r] = true;
 		}
 	}

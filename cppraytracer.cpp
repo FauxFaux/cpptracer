@@ -5,7 +5,6 @@
 #include "pixel.h"
 #include "rtsphere.h"
 #include "rtlight.h"
-#include <windows.h>
 
 
 #include <boost/thread.hpp>
@@ -38,6 +37,29 @@ void raytraceNonSSE(RGBA &p, const Ray &ray);
 void setupScene();
 RGBA* startRender(const int width, const int height, int numThreads);
 void writeBitmap(RGBA* pixelData, const int screenWidth, const int screenHeight);
+
+#ifndef _WINDOWS
+# include <ctime>
+#else
+# include <windows.h>
+#endif
+
+struct timer
+{
+#ifndef _WINDOWS
+	clock_t start;
+	timer() : start(clock())
+	{
+	}
+
+	~timer()
+	{
+		std::cout << static_cast<float>(clock()-start)/CLOCKS_PER_SEC << std::endl;	
+	}
+#else
+#	error no timer
+#endif
+};
 
 int main(int argc, char *argv[])
 {	
@@ -72,9 +94,9 @@ int main(int argc, char *argv[])
 	for (int i=1; i<=height; ++i)
 		if (height%i == 0)
 		{
-			long start = GetTickCount();
+			timer t;
 			delete[] startRender(width, height, i);
-			cout << setw(4) << right << i << ": " << (GetTickCount() - start) << endl;
+			cout << setw(4) << right << i << ": ";
 		}
 
 	// Write image to disk
@@ -182,8 +204,8 @@ void render(RGBA* pixelData, const int width, const int height, const int from, 
 
 			for(int a = 0; a < 4; a++)
 			{
-				rayPacket.directionX.m128_f32[a] = (x + a - halfX) * pixelWidth;
-				rayPacket.directionY.m128_f32[a] = -((y - halfY) * pixelHeight);				
+				asFloatArray(rayPacket.directionX)[a] = (x + a - halfX) * pixelWidth;
+				asFloatArray(rayPacket.directionY)[a] = -((y - halfY) * pixelHeight);				
 			}
 
 			rayPacket.directionZ = _mm_set1_ps(defaultNearClip);
@@ -204,6 +226,12 @@ void render(RGBA* pixelData, const int width, const int height, const int from, 
 //int maxX = 0;
 //int maxY = 0;
 
+#ifdef _WINDOWS
+# define asFloatArray(x) ((x).m128_f32)
+#else
+# define asFloatArray(x) ((float*)(&x))
+#endif
+
 void raytrace(RGBA* pixelData, const Ray& rays, const int iteration, const int w, const int h)
 {
 	if(iteration > 10)
@@ -212,7 +240,7 @@ void raytrace(RGBA* pixelData, const Ray& rays, const int iteration, const int w
 	bool isTracing[4] = { true, true, true, true };
 
 	for(int r = 0; r < 4; r++)
-		if(rays.positionX.m128_f32[r] == 0xffffffff)
+		if(asFloatArray(rays.positionX)[r] == 0xffffffff)
 			isTracing[r] = false;
 
 	// Initialisation state of no intersection, -1.
@@ -240,11 +268,11 @@ void raytrace(RGBA* pixelData, const Ray& rays, const int iteration, const int w
 			{
 				// If the intersection distance is greater than zero and it is nearer
 				// than the previous nearest intersection, this is our nearest sphere.
-				if(distance.m128_f32[r] > 0 && 
-					distance.m128_f32[r] < nearestDistance.m128_f32[r])
+				if(asFloatArray(distance)[r] > 0 && 
+					asFloatArray(distance)[r] < asFloatArray(nearestDistance)[r])
 				{
 					nearest[r] = sIndex;	// Store index of the nearest sphere.
-					nearestDistance.m128_f32[r] = distance.m128_f32[r];
+					asFloatArray(nearestDistance)[r] = asFloatArray(distance)[r];
 				}
 			}
 		}
@@ -346,7 +374,7 @@ void raytrace(RGBA* pixelData, const Ray& rays, const int iteration, const int w
 
 				for(int r = 0; r < 4; r++)
 					if(nearest[r] != sphereIndex)
-						reflectedPacket.positionX.m128_f32[r] = 0xffffffff;
+						asFloatArray(reflectedPacket.positionX)[r] = 0xffffffff;
 
 				raytrace(pixelData, reflectedPacket, iteration + 1, w, h);
 				
@@ -365,7 +393,7 @@ void raytrace(RGBA* pixelData, const Ray& rays, const int iteration, const int w
 			const SSEInt dotProduct = DotSSE(sphereNormalX, sphereNormalY, sphereNormalZ, 
 										lightDirX, lightDirY, lightDirZ);
 
-			if(dotProduct.m128_f32[0] > 0 || dotProduct.m128_f32[1] > 0 || dotProduct.m128_f32[2] > 0 || dotProduct.m128_f32[3] > 0)
+			if(asFloatArray(dotProduct)[0] > 0 || asFloatArray(dotProduct)[1] > 0 || asFloatArray(dotProduct)[2] > 0 || asFloatArray(dotProduct)[3] > 0)
 			{
 				Ray obstructionPacket;
 				obstructionPacket.directionX = lightDirX;
@@ -382,22 +410,22 @@ void raytrace(RGBA* pixelData, const Ray& rays, const int iteration, const int w
 				for(int r = 0; r < 4; r++)
 				{
 					// If this ray hit this sphere, and it's dot product indicates it is lit...
-					if(nearest[r] == sphereIndex && dotProduct.m128_f32[r] > 0)
+					if(nearest[r] == sphereIndex && asFloatArray(dotProduct)[r] > 0)
 					{
 						float sphereDiffuse = sphere.GetDiffuse();
 
 						float shade = 1; // Full illumination;
 
-						if(nearestObstruction.m128_f32[r] < distanceToLight.m128_f32[r])
+						if(asFloatArray(nearestObstruction)[r] < asFloatArray(distanceToLight)[r])
 							shade = 0; // Obstructed.
 
 						if(shade > 0)
 						{
 							// Set the red, green and blue component in an int so as to avoid
 							// overflowing a byte in case of "brighter than white" pixels.
-							int red = pixelData[r].red + (sphereColour.red * dotProduct.m128_f32[r] * light.power * sphereDiffuse * shade);
-							int green = pixelData[r].green + (sphereColour.green * dotProduct.m128_f32[r] * light.power * sphereDiffuse * shade);
-							int blue = pixelData[r].blue + (sphereColour.blue * dotProduct.m128_f32[r] * light.power * sphereDiffuse * shade);
+							int red = pixelData[r].red + (sphereColour.red * asFloatArray(dotProduct)[r] * light.power * sphereDiffuse * shade);
+							int green = pixelData[r].green + (sphereColour.green * asFloatArray(dotProduct)[r] * light.power * sphereDiffuse * shade);
+							int blue = pixelData[r].blue + (sphereColour.blue * asFloatArray(dotProduct)[r] * light.power * sphereDiffuse * shade);
 
 							// Clamp the RGB components back within the 0 - 255 range.
 							if(red > 255)
@@ -443,9 +471,9 @@ void raytrace(RGBA* pixelData, const Ray& rays, const int iteration, const int w
 				for(int r = 0; r < 4; r++)
 				{
 					// If this ray is hitting this sphere, and it's dot product > 0
-					if(nearest[r] == sphereIndex && specDP.m128_f32[r] > 0)
+					if(nearest[r] == sphereIndex && asFloatArray(specDP)[r] > 0)
 					{
-						const float specular = pow(specDP.m128_f32[r], 10) * sphere.GetSpecular();
+						const float specular = pow(asFloatArray(specDP)[r], 10) * sphere.GetSpecular();
 
 						// Calculate the new RGB components, being sure not to overflow.
 						int red = pixelData[r].red + (specular * 255);
@@ -478,8 +506,8 @@ SSEInt getNearestObstruction(const Ray& rays)
 		SSEInt distance = s->IntersectTest(rays);
 
 		for(int r = 0; r < 4; r++)
-			if(distance.m128_f32[r] > 0 && distance.m128_f32[r] < nearestObstruction.m128_f32[r])
-				nearestObstruction.m128_f32[r] = distance.m128_f32[r];
+			if(asFloatArray(distance)[r] > 0 && asFloatArray(distance)[r] < asFloatArray(nearestObstruction)[r])
+				asFloatArray(nearestObstruction)[r] = asFloatArray(distance)[r];
 	}
 
 	return nearestObstruction;
