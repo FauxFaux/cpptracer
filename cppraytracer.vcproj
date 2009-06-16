@@ -239,11 +239,11 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
-				RelativePath=".\IntersectionInfo.h"
+				RelativePath=".\intersectioninfo.h"
 				>
 			</File>
 			<File
-				RelativePath=".\Pixel.h"
+				RelativePath=".\pixel.h"
 				>
 			</File>
 			<File
@@ -251,15 +251,15 @@
 				>
 			</File>
 			<File
-				RelativePath=".\RTLight.h"
+				RelativePath=".\rtlight.h"
 				>
 			</File>
 			<File
-				RelativePath=".\RTObject.h"
+				RelativePath=".\rtobject.h"
 				>
 			</File>
 			<File
-				RelativePath=".\RTSphere.h"
+				RelativePath=".\rtsphere.h"
 				>
 			</File>
 			<File

@@ -1,5 +1,5 @@
-#include "StdAfx.h"
-#include "Color.h"
+#include "stdafx.h"
+#include "color.h"
 
 Color::Color(void)
 {

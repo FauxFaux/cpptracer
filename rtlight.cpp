@@ -1,4 +1,4 @@
-#include "StdAfx.h"
-#include "RTLight.h"
+#include "stdafx.h"
+#include "rtlight.h"
 
 

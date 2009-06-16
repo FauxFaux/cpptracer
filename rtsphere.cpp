@@ -1,5 +1,5 @@
-#include "StdAfx.h"
-#include "RTSphere.h"
+#include "stdafx.h"
+#include "rtsphere.h"
 
 using namespace std;
 

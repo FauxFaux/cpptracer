@@ -1,7 +1,7 @@
 #pragma once
 
-#include "Pixel.h"
-#include "RTObject.h"
+#include "pixel.h"
+#include "rtobject.h"
 
 class IntersectionInfo
 {

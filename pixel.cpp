@@ -1,4 +1,4 @@
-#include "StdAfx.h"
-#include "Pixel.h"
+#include "stdafx.h"
+#include "pixel.h"
 
 

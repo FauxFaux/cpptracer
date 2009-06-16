@@ -7,8 +7,8 @@
 #include <vector>
 #include <set>
 #include <math.h>
-#include "V3.h"
-#include "Ray.h"
+#include "v3.h"
+#include "ray.h"
 #include <xmmintrin.h>
 #include <iomanip>
 

@@ -1,7 +1,7 @@
 #pragma once
 
-#include "V3.h"
-#include "Pixel.h"
+#include "v3.h"
+#include "pixel.h"
 
 class RTSphere 
 {

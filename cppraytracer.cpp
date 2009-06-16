@@ -1,10 +1,10 @@
 // A C++ Raytracer written by Adam Miles.
 
 #include "stdafx.h"
-#include "IntersectionInfo.h"
+#include "intersectioninfo.h"
 #include "pixel.h"
-#include "RTSphere.h"
-#include "RTLight.h"
+#include "rtsphere.h"
+#include "rtlight.h"
 #include <windows.h>
 
 

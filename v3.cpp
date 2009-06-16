@@ -1,4 +1,4 @@
-#include "StdAfx.h"
+#include "stdafx.h"
 
 void Add(const V3& a, const V3& b, V3& out)
 {
