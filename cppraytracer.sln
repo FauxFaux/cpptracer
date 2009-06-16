@@ -1,0 +1,20 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 9.00
+# Visual Studio 2005
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CPPRaytracer", "CPPRaytracer\CPPRaytracer.vcproj", "{231E0AC8-38F2-44A8-991D-4E175BDEB7EB}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{231E0AC8-38F2-44A8-991D-4E175BDEB7EB}.Debug|Win32.ActiveCfg = Debug|Win32
+		{231E0AC8-38F2-44A8-991D-4E175BDEB7EB}.Debug|Win32.Build.0 = Debug|Win32
+		{231E0AC8-38F2-44A8-991D-4E175BDEB7EB}.Release|Win32.ActiveCfg = Release|Win32
+		{231E0AC8-38F2-44A8-991D-4E175BDEB7EB}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
