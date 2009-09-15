@@ -40,6 +40,7 @@ void writeBitmap(RGBA* pixelData, const int screenWidth, const int screenHeight)
 
 #ifndef _WIN32
 # include <ctime>
+# include <sys/time.h>
 #else
 # include <windows.h>
 #endif
@@ -47,14 +48,20 @@ void writeBitmap(RGBA* pixelData, const int screenWidth, const int screenHeight)
 struct timer
 {
 #ifndef _WIN32
-	clock_t start;
-	timer() : start(clock())
+	double start;
+	timer()
 	{
+		timeval now;
+		gettimeofday(&now,0);
+		start = now.tv_sec + (now.tv_usec / 1000000.0);
 	}
 
 	~timer()
 	{
-		output(static_cast<double>(clock()-start)/CLOCKS_PER_SEC);
+		timeval now;
+		gettimeofday(&now,0);
+		double end = now.tv_sec + (now.tv_usec / 1000000.0);
+		output(static_cast<double>(end-start));
 	}
 #else
 	LARGE_INTEGER start;
