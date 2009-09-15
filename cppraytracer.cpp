@@ -22,8 +22,8 @@ const float defaultNearClip = 0.1f;
 const int defaultThreads = 1;
 const int maxThreads = 8;
 
-const int defaultScreenWidth = 1280;
-const int defaultScreenHeight = 720;
+const int defaultScreenWidth = 12800;
+const int defaultScreenHeight = 7200;
 
 const int bytesInBitmapHeader = 54;
 
