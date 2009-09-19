@@ -26,7 +26,7 @@
 # include <xmmintrin.h>
 # define asFloatArray(x) ((float*)(&x))
 # define asUIntArray(x) ((unsigned int*)(&x))
-# define ALIGN16 __attribute__ (alignend(16))
+# define ALIGN16 __attribute__ (aligned(16))
 #endif
 
 #include <limits>
