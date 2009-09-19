@@ -338,9 +338,9 @@ void render(AJRGB* pixelData, const int width, const int height, const int from,
 
 			for(unsigned int i = 0; i < 4; i++)
 			{
-				pixelPtr[i].red = (uchar)colourPacket.red.m128_f32[i];
-				pixelPtr[i].green = (uchar)colourPacket.green.m128_f32[i];
-				pixelPtr[i].blue = (uchar)colourPacket.blue.m128_f32[i];
+				pixelPtr[i].red = (uchar)asFloatArray(colourPacket.red)[i];
+				pixelPtr[i].green = (uchar)asFloatArray(colourPacket.green)[i];
+				pixelPtr[i].blue = (uchar)asFloatArray(colourPacket.blue)[i];
 			}
 		}
 	}
@@ -562,9 +562,9 @@ void raytrace(SSERGB& colour, const Ray& rays, const int iteration, const int w,
 						const float specular = pow(asFloatArray(specDP)[r], 10) * sphere.GetSpecular();
 
 						//SSEFloat sseSpecular
-						colour.red.m128_f32[r] += specular;
-						colour.green.m128_f32[r] += specular;
-						colour.blue.m128_f32[r] += specular;
+						asFloatArray(colour.red)[r] += specular;
+						asFloatArray(colour.green)[r] += specular;
+						asFloatArray(colour.blue)[r] += specular;
 					}
 				}
 			}
