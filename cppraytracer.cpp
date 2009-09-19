@@ -79,12 +79,12 @@ struct timer
 		start = now.tv_sec + (now.tv_usec / 1000000.0);
 	}
 
-	~timer()
+	double End()
 	{
 		timeval now;
 		gettimeofday(&now,0);
 		double end = now.tv_sec + (now.tv_usec / 1000000.0);
-		output(static_cast<double>(end-start));
+		return static_cast<double>(end-start);
 	}
 #else
 	LARGE_INTEGER start;
