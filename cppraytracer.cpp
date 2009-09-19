@@ -362,7 +362,7 @@ void raytrace(SSERGB& colour, const Ray& rays, const int iteration, const int w,
 	unsigned int uniqueSpheres = 0;
 	
 	// Set the nearest intersection to as large as possible.
-	SSEFloat nearestDistance = _mm_set_ps1(FLT_MAX);
+	SSEFloat nearestDistance = _mm_set_ps1(std::numeric_limits<float>().max());
 
 	// For every sphere in the scene see if the ray intersects it.
 	for(unsigned int s = 0; s < numSpheres; s++)
