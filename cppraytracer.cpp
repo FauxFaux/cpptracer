@@ -28,6 +28,8 @@
 
 #define ALIGN16 __declspec(align(16))
 
+#include <limits>
+
 using namespace boost;
 
 using namespace std;
@@ -162,7 +164,7 @@ int main(int argc, char *argv[])
 	// Render the image
 	AJRGB* pixelData = new AJRGB[width * height];
 
-	double lowest = DBL_MAX;
+	double lowest = std::numeric_limits<double>().max();
 	int lowestThreads = 0;
 
 	for (int i=1; i<=height; ++i)
@@ -170,7 +172,7 @@ int main(int argc, char *argv[])
 		{
 			memset(pixelData, 0, sizeof(AJRGB) * width * height);
 
-			double iLowest = DBL_MAX;
+			double iLowest = std::numeric_limits<double>().max();
 
 			for(int r = 0; r < numRuns; r++)
 			{
