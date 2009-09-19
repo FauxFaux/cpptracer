@@ -6,7 +6,7 @@
 class IntersectionInfo
 {
 public:
-	IntersectionInfo(const RTObject* objects, const RGBA* c) : objectPtrs(objects), colours(c) { };
+	IntersectionInfo(const RTObject* objects, const AJRGB* c) : objectPtrs(objects), colours(c) { };
 
 	~IntersectionInfo() 
 	{ 
@@ -23,6 +23,6 @@ protected:
 	__m128 normalY;
 	__m128 normalZ;
 	const RTObject* objectPtrs;
-	const RGBA* colours;
+	const AJRGB* colours;
 	
 };

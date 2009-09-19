@@ -12,13 +12,13 @@ float Dot(const V3& a, const V3& b)
 	return a.x * b.x + a.y * b.y + a.z * b.z;
 }
 
-SSEInt DotSSE(const SSEInt &ax, const SSEInt &ay, const SSEInt &az, 
-			  const SSEInt &bx, const SSEInt &by, const SSEInt &bz)
+SSEFloat DotSSE(const SSEFloat &ax, const SSEFloat &ay, const SSEFloat &az, 
+			  const SSEFloat &bx, const SSEFloat &by, const SSEFloat &bz)
 {
 	return _mm_add_ps(_mm_add_ps(_mm_mul_ps(ax, bx), _mm_mul_ps(ay, by)), _mm_mul_ps(az, bz));
 }
 
-SSEInt LengthSSE(const SSEInt &ax, const SSEInt &ay, const SSEInt &az)
+SSEFloat LengthSSE(const SSEFloat &ax, const SSEFloat &ay, const SSEFloat &az)
 {
 	return _mm_sqrt_ps(_mm_add_ps(_mm_add_ps(_mm_mul_ps(ax, ax), _mm_mul_ps(ay, ay)), _mm_mul_ps(az, az)));
 }
@@ -30,16 +30,16 @@ void Multiply(const V3& a, const float& b, V3& out)
 	out.z = a.z * b;
 }
 
-void MultiplySSE(const SSEInt* xyzc, SSEInt* xyz)
+void MultiplySSE(const SSEFloat* xyzc, SSEFloat* xyz)
 {
 	xyz[0] = _mm_mul_ps(xyzc[0], xyzc[3]);
 	xyz[1] = _mm_mul_ps(xyzc[1], xyzc[3]);
 	xyz[2] = _mm_mul_ps(xyzc[2], xyzc[3]);
 }
 
-void NormalizeSSE(SSEInt &x, SSEInt &y, SSEInt &z)
+void NormalizeSSE(SSEFloat &x, SSEFloat &y, SSEFloat &z)
 {
-	SSEInt oneOverLength = _mm_rsqrt_ps(_mm_add_ps(_mm_add_ps(_mm_mul_ps(x, x), _mm_mul_ps(y, y)), _mm_mul_ps(z, z)));
+	SSEFloat oneOverLength = _mm_rsqrt_ps(_mm_add_ps(_mm_add_ps(_mm_mul_ps(x, x), _mm_mul_ps(y, y)), _mm_mul_ps(z, z)));
 
 	x = _mm_mul_ps(x, oneOverLength);
 	y = _mm_mul_ps(y, oneOverLength);
@@ -56,15 +56,15 @@ void Normalize(V3 &out)
 }
 
 // The formula for reflecting a vector in a normal.
-void ReflectSSE(const SSEInt &rayDirX, const SSEInt &rayDirY, const SSEInt &rayDirZ, 
-				const SSEInt &normalX, const SSEInt &normalY, const SSEInt &normalZ,
-				SSEInt &reflectedX, SSEInt &reflectedY, SSEInt &reflectedZ)
+void ReflectSSE(const SSEFloat &rayDirX, const SSEFloat &rayDirY, const SSEFloat &rayDirZ, 
+				const SSEFloat &normalX, const SSEFloat &normalY, const SSEFloat &normalZ,
+				SSEFloat &reflectedX, SSEFloat &reflectedY, SSEFloat &reflectedZ)
 {
 	reflectedX = rayDirX; 
 	reflectedY = rayDirY; 
 	reflectedZ = rayDirZ;
 
-	SSEInt numByTwo = 
+	SSEFloat numByTwo = 
 		_mm_mul_ps(_mm_add_ps(_mm_add_ps(_mm_mul_ps(rayDirX, normalX), _mm_mul_ps(rayDirY, normalY)), _mm_mul_ps(rayDirZ, normalZ)), _mm_set_ps1(2));
 
 	reflectedX = _mm_sub_ps(reflectedX, _mm_mul_ps(numByTwo, normalX));
