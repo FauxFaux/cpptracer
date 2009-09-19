@@ -22,6 +22,7 @@
 # define asFloatArray(x) ((x).m128_f32)
 # define asUIntArray(x) ((x).m128_u32)
 #else
+# include <xmmintrin.h>
 # define asFloatArray(x) ((float*)(&x))
 # define asUIntArray(x) ((unsigned int*)(&x))
 #endif
