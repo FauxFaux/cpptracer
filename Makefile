@@ -1,5 +1,5 @@
 CC=g++
-CFLAGS=-O3 -ffast-math -msse -msse2 -msse3 -msse4 -fexpensive-optimizations
+CFLAGS=-O3 -ffast-math -msse -msse2 -msse3 -msse4 -fexpensive-optimizations -fipa-struct-reorg -fipa-type-escape
 
 all: cpptracer
 
@@ -8,7 +8,7 @@ out/combined.cpp: *.cpp
 	mkdir out
 	cat *.cpp > out/combined.cpp
 
-cpptracer: out/combined.cpp
+cpptracer: out/combined.cpp Makefile
 	$(CC) $(CFLAGS) -lboost_thread-mt out/combined.cpp -I${PWD} -o cpptracer
 
 clean:
