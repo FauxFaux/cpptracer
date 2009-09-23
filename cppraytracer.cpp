@@ -53,7 +53,7 @@ unsigned int numSpheres;
 RTLight lights[10];
 unsigned int numLights;
 
-void render(AJRGB* pixelData, const int screenWidth, const int screenHeight, const int from, const int numRows);
+void render(AJRGB* pixelData, const int screenWidth, const int screenHeight, const int threadID, const int numThreads);
 inline SSEFloat getNearestObstruction(const Ray& rays);
 void raytrace(SSERGB& colour, const Ray& rays, const int iteration, const int w, const int h);
 void raytraceNonSSE(AJRGB &p, const Ray &ray);
@@ -196,6 +196,7 @@ int main(int argc, char *argv[])
 				writeBitmap(pixelData, width, height, i);
 		}
 
+		std::cout << setw(4) << right << "Interleaved version." << std::endl;
 		std::cout << setw(4) << right << "Lowest: " << lowest * 1000 << "ms at " << lowestThreads << " threads." << std::endl;
 
 	delete [] pixelData;
@@ -269,15 +270,15 @@ omp_set_num_threads(numThreads);
 	ptr_vector<thread> threads;
  
 	for(int t = 0; t < numThreads; ++t)
-		threads.push_back(new thread(bind(&render, pixelData, width, height, t * (height / numThreads), (height / numThreads))));
- 
+		threads.push_back(new thread(bind(&render, pixelData, width, height, t, numThreads))); 
+
 	BOOST_FOREACH(thread& t, threads)
 		t.join();
 #endif
 }
 
 
-void render(AJRGB* pixelData, const int width, const int height, const int from, const int numRows)
+void render(AJRGB* pixelData, const int width, const int height, const int threadID, const int numThreads)
 {
 	// Calculate the height of the viewport depending on its width and the aspect
 	// ratio of the image.
@@ -301,7 +302,7 @@ void render(AJRGB* pixelData, const int width, const int height, const int from,
 	SSERGB colourPacket(0,0,0);
 
 	// Scanning across in rows from the top
-	for(unsigned int y = from; y < from + numRows; y++)
+	for(unsigned int y = threadID; y < height; y+=numThreads)
 	{
 		SSEFloat sseY = _mm_set1_ps(y);
 
