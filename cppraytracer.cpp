@@ -29,8 +29,6 @@
 # define ALIGN16 __attribute__ (aligned(16))
 #endif
 
-#include <limits>
-
 using namespace boost;
 
 using namespace std;

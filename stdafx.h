@@ -1,6 +1,8 @@
 #pragma once
 
 #define WIN32_LEAN_AND_MEAN		// Exclude rarely-used stuff from Windows headers
+#define NOMINMAX
+
 #include <stdio.h>
 #include <string>
 #include <iostream>
@@ -13,6 +15,7 @@
 #include <emmintrin.h>
 #include <mmintrin.h>
 #include <iomanip>
+#include <limits>
 
 //typedef __m128i SSEInt;
 typedef __m128 SSEFloat;
