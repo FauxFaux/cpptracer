@@ -18,6 +18,12 @@
 #include <boost/ptr_container/ptr_vector.hpp>
 #include <boost/foreach.hpp>
 
+#ifndef _WINDOWS
+# if defined(WIN32) || defined(_WIN32)
+#  define _WINDOWS
+# endif
+#endif
+
 #ifdef _WINDOWS
 # define asFloatArray(x) ((x).m128_f32)
 # define asUIntArray(x) ((x).m128_u32)
