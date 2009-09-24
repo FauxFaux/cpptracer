@@ -27,12 +27,16 @@
 #ifdef _WINDOWS
 # define asFloatArray(x) ((x).m128_f32)
 # define asUIntArray(x) ((x).m128_u32)
-# define ALIGN16 __declspec(align(16))
 #else
 # include <xmmintrin.h>
 # define asFloatArray(x) ((float*)(&x))
 # define asUIntArray(x) ((unsigned int*)(&x))
-# define ALIGN16 __attribute__ (aligned(16))
+#endif
+
+#ifdef __GNUC__
+# define ALIGN16 __attribute__ ((aligned (16)))
+#else
+# define ALIGN16 __declspec(align(16))
 #endif
 
 using namespace boost;
