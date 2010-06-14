@@ -1,7 +1,5 @@
 package com.goeswhere.tracer;
 
-import com.goeswhere.tracer.AJRGB.SSERGB;
-
 class RtSphere {
 
 	RtSphere() { radius = (0); diffuse = (1); specular = (0); reflection = (0); colour = new SSERGB(1,1,1);

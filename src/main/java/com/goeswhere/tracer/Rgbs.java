@@ -2,12 +2,12 @@ package com.goeswhere.tracer;
 
 class AJRGB
 {
-	AJRGB() : red(0), green(0), blue(0) { }
-	AJRGB(uchar R, uchar G, uchar B) : red(R), green(G), blue(B) { }
+	AJRGB() { this(0,0,0); }
+	AJRGB(int R, int G, int B) { red = (R); green = (G); blue = (B); }
 
-	uchar blue;
-	uchar green;
-	uchar red;
+	int blue;
+	int green;
+	int red;
 }
 
 class SSERGB
