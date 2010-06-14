@@ -1,6 +1,7 @@
 package com.goeswhere.tracer;
 
-class V3 implements IV3Extra {
+class V3Impl extends V3 implements IV3Extra {
+	@Override public
 	void Add(V3& a, V3& b, V3& out)
 	{
 		out.x = a.x + b.x;
@@ -8,22 +9,26 @@ class V3 implements IV3Extra {
 		out.z = a.z + b.z;
 	}
 
+	@Override public
 	float Dot(V3& a, V3& b)
 	{
 		return a.x * b.x + a.y * b.y + a.z * b.z;
 	}
 
+	@Override public
 	SSEFloat DotSSE(SSEFloat &ax, SSEFloat &ay, SSEFloat &az,
 				  SSEFloat &bx, SSEFloat &by, SSEFloat &bz)
 	{
 		return _mm_add_ps(_mm_add_ps(_mm_mul_ps(ax, bx), _mm_mul_ps(ay, by)), _mm_mul_ps(az, bz));
 	}
 
+	@Override public
 	SSEFloat LengthSSE(SSEFloat &ax, SSEFloat &ay, SSEFloat &az)
 	{
 		return _mm_sqrt_ps(_mm_add_ps(_mm_add_ps(_mm_mul_ps(ax, ax), _mm_mul_ps(ay, ay)), _mm_mul_ps(az, az)));
 	}
 
+	@Override public
 	void Multiply(V3& a, float& b, V3& out)
 	{
 		out.x = a.x * b;
@@ -31,6 +36,7 @@ class V3 implements IV3Extra {
 		out.z = a.z * b;
 	}
 
+	@Override public
 	void MultiplySSE(SSEFloat* xyzc, SSEFloat* xyz)
 	{
 		xyz[0] = _mm_mul_ps(xyzc[0], xyzc[3]);
@@ -38,6 +44,7 @@ class V3 implements IV3Extra {
 		xyz[2] = _mm_mul_ps(xyzc[2], xyzc[3]);
 	}
 
+	@Override public
 	void NormalizeSSE(SSEFloat &x, SSEFloat &y, SSEFloat &z)
 	{
 		SSEFloat oneOverLength = _mm_rsqrt_ps(_mm_add_ps(_mm_add_ps(_mm_mul_ps(x, x), _mm_mul_ps(y, y)), _mm_mul_ps(z, z)));
@@ -47,6 +54,7 @@ class V3 implements IV3Extra {
 		z = _mm_mul_ps(z, oneOverLength);
 	}
 
+	@Override public
 	void Normalize(V3 &out)
 	{
 		float oneOverLength = InvSqrt(out.x * out.x + out.y * out.y + out.z * out.z);
@@ -57,6 +65,7 @@ class V3 implements IV3Extra {
 	}
 
 	// The formula for reflecting a vector in a normal.
+	@Override public
 	void ReflectSSE(SSEFloat &rayDirX, SSEFloat &rayDirY, SSEFloat &rayDirZ,
 					SSEFloat &normalX, SSEFloat &normalY, SSEFloat &normalZ,
 					SSEFloat &reflectedX, SSEFloat &reflectedY, SSEFloat &reflectedZ)
@@ -73,6 +82,7 @@ class V3 implements IV3Extra {
 		reflectedZ = _mm_sub_ps(reflectedZ, _mm_mul_ps(numByTwo, normalZ));
 	}
 
+	@Override public
 	void Subtract(V3& a, V3& b, V3& out)
 	{
 		out.x = a.x - b.x;
@@ -82,6 +92,7 @@ class V3 implements IV3Extra {
 
 	// The infamous "fast inverse square root" from Quake 3 source and numerous
 	// other articles.
+	@Override public
 	float InvSqrt(float x)
 	{
 		float xhalf = 0.5*x;
