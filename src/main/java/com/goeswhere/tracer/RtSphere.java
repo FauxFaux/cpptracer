@@ -1,6 +1,26 @@
 package com.goeswhere.tracer;
 
+import com.goeswhere.tracer.AJRGB.SSERGB;
+
 class RtSphere {
+
+	RtSphere() { radius = (0); diffuse = (1); specular = (0); reflection = (0); colour = new SSERGB(1,1,1);
+		radiusSq = _mm_set1_ps(0);
+	}
+
+	RtSphere(V3 _position, float _radius, SSERGB _colour) {
+				position=(_position); colour=(_colour); radius=(_radius); diffuse=(1); specular=(0); reflection=(0);
+		radiusSq = _mm_set1_ps(_radius * _radius);
+	}
+
+	V3 position;
+	SSERGB colour;
+	float radius;
+	float diffuse;
+	float specular;
+	float reflection;
+	SSEFloat radiusSq;
+
 	// At a given point in the world, reflect a ray off the sphere's normal to that point.
 	void ReflectRayAtPoint(SSEFloat rayDirX, SSEFloat rayDirY, SSEFloat rayDirZ,
 										SSEFloat intPointX, SSEFloat intPointY, SSEFloat intPointZ,
