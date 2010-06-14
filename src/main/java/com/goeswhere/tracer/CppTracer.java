@@ -149,41 +149,41 @@ class CppTracer {
 		// this would be read in from some kind of script / scene file rather
 		// than being hard-coded :)
 
-		RTSphere sphere = new RtSphere(new V3(0, 0, 1.75f), 0.15f, new SSERGB(1, 1, 1));
+		RtSphere sphere = new RtSphere(new V3(0, 0, 1.75f), 0.15f, new SSERGB(1, 1, 1));
 		sphere.SetSpecular(0.25f); sphere.SetReflection(0.9f); sphere.SetDiffuse(0.25f);
 		spheres[0] = sphere;
 
-		RTSphere sphere2(V3(-0.3f, 0, 1.75f), 0.15f, SSERGB(1, 1, 0));
+		RtSphere sphere2(V3(-0.3f, 0, 1.75f), 0.15f, SSERGB(1, 1, 0));
 		sphere2.SetSpecular(0.25f); sphere2.SetReflection(0.25f);
 		spheres[1] = sphere2;
 
-		RTSphere sphere3(V3(0.3f, 0, 1.75f), 0.15f, SSERGB(0, 0, 1));
+		RtSphere sphere3(V3(0.3f, 0, 1.75f), 0.15f, SSERGB(0, 0, 1));
 		sphere3.SetSpecular(0.25f); sphere3.SetReflection(0.25f);
 		spheres[2] = sphere3;
 
-		RTSphere sphere4(V3(0, 0.3f, 1.75f), 0.15f, SSERGB(1, 0, 0));
+		RtSphere sphere4(V3(0, 0.3f, 1.75f), 0.15f, SSERGB(1, 0, 0));
 		sphere4.SetSpecular(0.25f); sphere4.SetReflection(0.25f);
 		spheres[3] = sphere4;
 
-		RTSphere sphere5(V3(0, -0.3f, 1.75f), 0.15f, SSERGB(0, 1, 0));
+		RtSphere sphere5(V3(0, -0.3f, 1.75f), 0.15f, SSERGB(0, 1, 0));
 		sphere5.SetSpecular(0.25f); sphere5.SetReflection(0.25f);
 		spheres[4] = sphere5;
 
 		numSpheres = 5;
 
-		//RTSphere sphere6(V3(-0.3f, 0.3f, 1.75f), 0.15f, AJRGB(255, 0, 255));
+		//RtSphere sphere6(V3(-0.3f, 0.3f, 1.75f), 0.15f, AJRGB(255, 0, 255));
 		//sphere6.SetSpecular(0.25f); sphere6.SetReflection(0.25f);
 		//spheres.push_back(sphere6);
 
-		//RTSphere sphere7(V3(0.3f, 0.3f, 1.75f), 0.15f, AJRGB(0, 255, 255));
+		//RtSphere sphere7(V3(0.3f, 0.3f, 1.75f), 0.15f, AJRGB(0, 255, 255));
 		//sphere7.SetSpecular(0.25f); sphere7.SetReflection(0.25f);
 		//spheres.push_back(sphere7);
 
-		//RTSphere sphere8(V3(0.3f, -0.3f, 1.75f), 0.15f, AJRGB(255, 255, 255));
+		//RtSphere sphere8(V3(0.3f, -0.3f, 1.75f), 0.15f, AJRGB(255, 255, 255));
 		//sphere8.SetSpecular(0.25f); sphere8.SetReflection(0.25f);
 		//spheres.push_back(sphere8);
 
-		//RTSphere sphere9(V3(-0.3f, -0.3f, 1.75f), 0.15f, AJRGB(0, 0, 0));
+		//RtSphere sphere9(V3(-0.3f, -0.3f, 1.75f), 0.15f, AJRGB(0, 0, 0));
 		//sphere9.SetSpecular(0.25f); sphere9.SetReflection(0.25f);
 		//spheres.push_back(sphere9);
 
@@ -310,7 +310,7 @@ class CppTracer {
 		{
 			// Intersect the packet of rays with the sphere and have the distance to
 			// the intersection point returned.
-			RTSphere& sphere = spheres[s];
+			RtSphere& sphere = spheres[s];
 			SSEFloat distance = sphere.IntersectTest(rays);
 
 			SSEFloat distGTZeroMask = _mm_cmpgt_ps(distance, zero);
@@ -349,7 +349,7 @@ class CppTracer {
 		for(unsigned int sh = 0; sh < uniqueSpheres; sh++)
 		{
 			unsigned int sphereIndex = spheresHit[sh];
-			RTSphere& sphere = spheres[sphereIndex];	// The sphere to be tested.
+			RtSphere& sphere = spheres[sphereIndex];	// The sphere to be tested.
 
 			SSEFloat sseSI = SetFromUInt(sphereIndex);
 			SSEFloat nearestMask = _mm_cmpeq_ps(sseNearest, sseSI);
@@ -520,7 +520,7 @@ class CppTracer {
 
 		for(unsigned int s = 0; s < numSpheres; s++)
 		{
-			RTSphere& sphere = spheres[s];
+			RtSphere& sphere = spheres[s];
 			SSEFloat distance = sphere.IntersectTest(rays);
 
 			SSEFloat gtZeroMask = _mm_cmpgt_ps(distance, zero);
