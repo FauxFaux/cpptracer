@@ -6,3 +6,6 @@ x64
 Debug
 Release
 cpptracer
+bin
+.settings
+.*
