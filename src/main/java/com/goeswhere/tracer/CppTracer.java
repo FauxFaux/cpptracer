@@ -2,10 +2,6 @@ package com.goeswhere.tracer;
 
 class CppTracer {
 
-	# define asFloatArray(x) ((float*)(&x))
-	# define asUIntArray(x) ((unsigned int*)(&x))
-
-
 	float EPSILON = 0.001f;
 	float defaultViewportWidth = 0.1f;
 	float defaultNearClip = 0.1f;
@@ -19,57 +15,41 @@ class CppTracer {
 
 	int bytesInBitmapHeader = 54;
 
-	RTSphere spheres[10];
-	unsigned int numSpheres;
+	RtSphere[] spheres = new RtSphere[10];
+	int numSpheres;
 
-	RTLight lights[10];
-	unsigned int numLights;
-
-	void render(AJRGB* pixelData, int screenWidth, int screenHeight, int threadID, int numThreads);
-	inline SSEFloat getNearestObstruction(Ray& rays);
-	void raytrace(SSERGB& colour, Ray& rays, int iteration, int w, int h);
-	void raytraceNonSSE(AJRGB &p, Ray &ray);
-	void setupScene();
-	void startRender(AJRGB* pixelData, int width, int height, int numThreads);
-	void writeBitmap(AJRGB* pixelData, int screenWidth, int screenHeight, int threadCount);
-
-	#ifndef _WIN32
-	# include <ctime>
-	# include <sys/time.h>
-	#else
-	# include <windows.h>
-	#endif
+	RtLight[] lights = new RtLight[10];
+	int numLights;
 
 	class timer
 	{
-		LARGE_INTEGER start;
+		long start;
 		timer()
 		{
-			QueryPerformanceCounter(&start);
+			start = System.nanoTime();
 		}
 
 		double End()
 		{
-			LARGE_INTEGER end, freq;
-			QueryPerformanceCounter(&end);
-			QueryPerformanceFrequency(&freq);
-			return static_cast<double>(end.QuadPart-start.QuadPart)/freq.QuadPart;
+			final long end = System.nanoTime();
+			final double freq = 1e9;
+			return (double)(end-start)/freq;
 		}
 
 		void output(double seconds)
 		{
-			std::cout << seconds * 1000 << "ms" << std::endl;
+			System.out.println(seconds * 1000 + "ms");
 		}
 	}
 
 
-	inline SSEFloat SetFromUInt(unsigned int x)
+	SSEFloat SetFromUInt(int x)
 	{
 		__m128i V = _mm_set1_epi32( x );
 	    return reinterpret_cast<__m128 *>(&V)[0];
 	}
 
-	inline SSEFloat SetFromUIntPtr(unsigned int* p)
+	SSEFloat SetFromUIntPtr(int p)
 	{
 		__m128i V = _mm_loadu_si128( (__m128i*)p );
 	    return reinterpret_cast<__m128 *>(&V)[0];
@@ -79,8 +59,12 @@ class CppTracer {
 
 
 
-	int main(int argc, char *argv[])
+	public static void main(String... origv)
 	{
+		final int argc = argv.length + 1;
+		final String[] argv = new String[argc];
+		System.arraycopy(origv, 0, argv, 1, origv.length);
+
 		if(argc == 1)
 		{
 			printf(" - cppraytracer[.exe] [width] [height] [runCount] [imageCount]\n");
@@ -88,7 +72,7 @@ class CppTracer {
 			printf("[height] = Height of rendered image in pixels. Default = 7200\n");
 			printf("[runCount] = Number of times to run each render at each thread count, lowest time is chosen. Has the effect of smoothing out the curve / ignoring sporadic CPU load. Default = 1\n");
 			printf("[imageCount] = Writes out the rendered BMPs to disk for thread counts <= imageCount. eg '3' will render out images for threadCount 1, 2, 3. Default = 0\n");
-			return 0;
+			return;
 		}
 
 		int width = 0;
@@ -165,7 +149,7 @@ class CppTracer {
 		// this would be read in from some kind of script / scene file rather
 		// than being hard-coded :)
 
-		RTSphere sphere(V3(0, 0, 1.75f), 0.15f, SSERGB(1, 1, 1));
+		RTSphere sphere = new RtSphere(new V3(0, 0, 1.75f), 0.15f, new SSERGB(1, 1, 1));
 		sphere.SetSpecular(0.25f); sphere.SetReflection(0.9f); sphere.SetDiffuse(0.25f);
 		spheres[0] = sphere;
 
