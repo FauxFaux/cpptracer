@@ -10,7 +10,10 @@ class AJRGB
 	int red;
 
 	public void zero() {
-		throw new UnsupportedOperationException();
+		red = green = blue = 0;
+	}
+	public int toRgb() {
+		return (red << 16) + (green << 8) + blue;
 	}
 }
 

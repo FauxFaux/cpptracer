@@ -1,5 +1,7 @@
 package com.goeswhere.tracer;
 
+import static com.goeswhere.tracer.Stdafx.Select;
+
 class RtSphere {
 
 	 V3 GetPosition() { return position; }

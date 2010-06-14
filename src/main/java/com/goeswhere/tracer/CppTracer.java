@@ -1,9 +1,20 @@
 package com.goeswhere.tracer;
 
+import static com.goeswhere.tracer.Stdafx.AnyComponentGreaterThanZero;
+import static com.goeswhere.tracer.Stdafx.Select;
+
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+
+import javax.imageio.ImageIO;
+
 class CppTracer {
 
 	float EPSILON = 0.001f;
-	float defaultViewportWidth = 0.1f;
+	static float defaultViewportWidth = 0.1f;
 	float defaultNearClip = 0.1f;
 	int defaultThreads = 1;
 	int maxThreads = 8;
@@ -33,7 +44,7 @@ class CppTracer {
 		{
 			final long end = System.nanoTime();
 			final double freq = 1e9;
-			return (double)(end-start)/freq;
+			return (end-start)/freq;
 		}
 
 		void output(double seconds)
@@ -198,22 +209,24 @@ class CppTracer {
 		// End of scene data.
 	}
 
-	static void startRender(AJRGB[] pixelData, int width, int height, int numThreads)
+	static void startRender(final AJRGB[] pixelData, final int width, final int height, final int numThreads)
 	{
 		if(numThreads < 1)
 			numThreads = 1;
 
-		ptr_vector<thread> threads;
+		ExecutorService threads = Executors.newFixedThreadPool(numThreads);
 
-		for(int t = 0; t < numThreads; ++t)
-			threads.push_back(new thread(bind(&render, pixelData, width, height, t, numThreads)));
+		for(final int t = 0; t < numThreads; ++t) {
+			final int q = t;
+			threads.submit(new Runnable() { public void run() { render(pixelData, width, height, q, numThreads); } });
+		}
 
-		BOOST_FOREACH(thread& t, threads)
-			t.join();
+		threads.shutdown();
+		threads.awaitTermination(Long.MAX_VALUE, TimeUnit.DAYS);
 	}
 
 
-	void render(AJRGB pixelData, int width, int height, int threadID, int numThreads)
+	static void render(AJRGB[] pixelData, int width, int height, int threadID, int numThreads)
 	{
 		// Calculate the height of the viewport depending on its width and the aspect
 		// ratio of the image.
@@ -237,12 +250,12 @@ class CppTracer {
 		SSERGB colourPacket = new SSERGB(0,0,0);
 
 		// Scanning across in rows from the top
-		for(long y = threadID; y < height; y+=numThreads)
+		for(int y = threadID; y < height; y+=numThreads)
 		{
 			SSEFloat sseY = _mm_set1_ps(y);
 
 			// Four pixels at a time.
-			for(long x = 0; x < width; x+=4)
+			for(int x = 0; x < width; x+=4)
 			{
 				SSEFloat sseX = _mm_set1_ps(x);
 
@@ -271,13 +284,13 @@ class CppTracer {
 				colourPacket.green =  _mm_min_ps(colourPacket.green, twoFiftyFive);
 				colourPacket.blue =  _mm_min_ps(colourPacket.blue, twoFiftyFive);
 
-				AJRGB pixelPtr = pixelData + (x + y * width);
+				final int off = x + y * width;
 
 				for(int i = 0; i < 4; i++)
 				{
-					pixelPtr[i].red = (uchar)asFloatArray(colourPacket.red)[i];
-					pixelPtr[i].green = (uchar)asFloatArray(colourPacket.green)[i];
-					pixelPtr[i].blue = (uchar)asFloatArray(colourPacket.blue)[i];
+					pixelData[i + off].red = asFloatArray(colourPacket.red)[i];
+					pixelData[i + off].green = asFloatArray(colourPacket.green)[i];
+					pixelData[i + off].blue = asFloatArray(colourPacket.blue)[i];
 				}
 			}
 		}
@@ -318,10 +331,10 @@ class CppTracer {
 		}
 
 		sseNearest = Select(trues, sseNearest, isTracingMask);
-		int nearest = new int[4];
+		int[] nearest = new int[4];
 		_mm_store_ps(nearest, sseNearest);
 
-		int spheresHit = new int [] {0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF};
+		int[] spheresHit = new int [] {0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF};
 
 		// NO idea how to sse this.
 		for(int n = 0; n < 4; n++)
@@ -528,66 +541,14 @@ class CppTracer {
 		return nearestObstruction;
 	}
 
-	// Write the final bitmap to disk. Code adapted from another raytracer
-	// from www.superjer.com under a "do whatever you like with this code"
-	// license.
 	static void writeBitmap(AJRGB[] pixelData, int w, int h, int tc)
 	{
-		FILE f;
+		final BufferedImage image = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
+		for (int y = 0; y < h; ++y)
+			for (int x = 0; x < w; ++x)
+				image.setRGB(x, y, pixelData[x + y * w].toRgb());
 
-		// 54 bytes in the bitmap file header plus 3 bytes per pixel.
-		int filesize = 3 * w * h + bytesInBitmapHeader;
-
-		char bmpfileheader[] = new char[] {'B','M', 0,0,0,0, 0,0, 0,0, 54,0,0,0}
-		char bmpinfoheader[40] = new char[] { 40,0,0,0, 0,0,0,0, 0,0,0,0, 1,0, 24,0}
-
-		bmpfileheader[ 2] = (unsigned char)(filesize    );
-	    bmpfileheader[ 3] = (unsigned char)(filesize>> 8);
-	    bmpfileheader[ 4] = (unsigned char)(filesize>>16);
-	    bmpfileheader[ 5] = (unsigned char)(filesize>>24);
-
-	    bmpinfoheader[ 4] = (unsigned char)(w    );
-	    bmpinfoheader[ 5] = (unsigned char)(w>> 8);
-	    bmpinfoheader[ 6] = (unsigned char)(w>>16);
-	    bmpinfoheader[ 7] = (unsigned char)(w>>24);
-	    bmpinfoheader[ 8] = (unsigned char)(h    );
-	    bmpinfoheader[ 9] = (unsigned char)(h>> 8);
-	    bmpinfoheader[10] = (unsigned char)(h>>16);
-	    bmpinfoheader[11] = (unsigned char)(h>>24);
-
-		// Open/Create a file resulting image to disk.
-		char str[256];
-		sprintf(str, "myFirstImg_%d.bmp", tc);
-
-		f = fopen(str, "wb");
-
-		// Write the header data.
-		fwrite(bmpfileheader, 1, 14, f);
-		fwrite(bmpinfoheader, 1, 40, f);
-
-		// Every 'line' of bitmap data must have a multiple of 4 bytes, so we may
-		// need to write up to 3 bytes of extra data.
-		unsigned char bmppad[3] = {0,0,0}
-
-		// Calculate how many bytes need to be written as padding.
-		int pad = (3 * w) % 4;
-
-		// Bitmaps must be written from the bottom row upwards rather than the top
-		// down.
-		for(int y = h - 1; y > -1; y--)
-		{
-			// For each row in the image, calculate its position in the array
-			// and write it out.
-			int rowNum = y * w;
-
-			// Written in BGR order, 1 row at a time.
-			fwrite(&pixelData[rowNum], 1, 3 * w, f);
-
-			// If the rows need padding, write out 4 minus pad bytes of zero now.
-			if(pad > 0)
-				fwrite(bmppad, 1, 4 - pad, f);
-		}
-
-		fclose(f);
+		ImageIO.write(image, "bmp", new File("ohnoes" + tc + ".bmp"));
 	}
 }
+
