@@ -9,3 +9,4 @@ cpptracer
 bin
 .settings
 .*
+target
