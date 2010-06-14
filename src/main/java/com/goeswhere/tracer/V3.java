@@ -1,37 +1,37 @@
 package com.goeswhere.tracer;
 
 class V3 implements IV3Extra {
-	void Add(const V3& a, const V3& b, V3& out)
+	void Add(V3& a, V3& b, V3& out)
 	{
 		out.x = a.x + b.x;
 		out.y = a.y + b.y;
 		out.z = a.z + b.z;
 	}
 
-	float Dot(const V3& a, const V3& b)
+	float Dot(V3& a, V3& b)
 	{
 		return a.x * b.x + a.y * b.y + a.z * b.z;
 	}
 
-	SSEFloat DotSSE(const SSEFloat &ax, const SSEFloat &ay, const SSEFloat &az,
-				  const SSEFloat &bx, const SSEFloat &by, const SSEFloat &bz)
+	SSEFloat DotSSE(SSEFloat &ax, SSEFloat &ay, SSEFloat &az,
+				  SSEFloat &bx, SSEFloat &by, SSEFloat &bz)
 	{
 		return _mm_add_ps(_mm_add_ps(_mm_mul_ps(ax, bx), _mm_mul_ps(ay, by)), _mm_mul_ps(az, bz));
 	}
 
-	SSEFloat LengthSSE(const SSEFloat &ax, const SSEFloat &ay, const SSEFloat &az)
+	SSEFloat LengthSSE(SSEFloat &ax, SSEFloat &ay, SSEFloat &az)
 	{
 		return _mm_sqrt_ps(_mm_add_ps(_mm_add_ps(_mm_mul_ps(ax, ax), _mm_mul_ps(ay, ay)), _mm_mul_ps(az, az)));
 	}
 
-	void Multiply(const V3& a, const float& b, V3& out)
+	void Multiply(V3& a, float& b, V3& out)
 	{
 		out.x = a.x * b;
 		out.y = a.y * b;
 		out.z = a.z * b;
 	}
 
-	void MultiplySSE(const SSEFloat* xyzc, SSEFloat* xyz)
+	void MultiplySSE(SSEFloat* xyzc, SSEFloat* xyz)
 	{
 		xyz[0] = _mm_mul_ps(xyzc[0], xyzc[3]);
 		xyz[1] = _mm_mul_ps(xyzc[1], xyzc[3]);
@@ -57,8 +57,8 @@ class V3 implements IV3Extra {
 	}
 
 	// The formula for reflecting a vector in a normal.
-	void ReflectSSE(const SSEFloat &rayDirX, const SSEFloat &rayDirY, const SSEFloat &rayDirZ,
-					const SSEFloat &normalX, const SSEFloat &normalY, const SSEFloat &normalZ,
+	void ReflectSSE(SSEFloat &rayDirX, SSEFloat &rayDirY, SSEFloat &rayDirZ,
+					SSEFloat &normalX, SSEFloat &normalY, SSEFloat &normalZ,
 					SSEFloat &reflectedX, SSEFloat &reflectedY, SSEFloat &reflectedZ)
 	{
 		reflectedX = rayDirX;
@@ -73,7 +73,7 @@ class V3 implements IV3Extra {
 		reflectedZ = _mm_sub_ps(reflectedZ, _mm_mul_ps(numByTwo, normalZ));
 	}
 
-	void Subtract(const V3& a, const V3& b, V3& out)
+	void Subtract(V3& a, V3& b, V3& out)
 	{
 		out.x = a.x - b.x;
 		out.y = a.y - b.y;

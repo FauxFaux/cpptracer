@@ -2,8 +2,8 @@ package com.goeswhere.tracer;
 
 class RtSphere {
 	// At a given point in the world, reflect a ray off the sphere's normal to that point.
-	void ReflectRayAtPoint(const SSEFloat &rayDirX, const SSEFloat &rayDirY, const SSEFloat &rayDirZ,
-										const SSEFloat &intPointX, const SSEFloat &intPointY, const SSEFloat &intPointZ,
+	void ReflectRayAtPoint(SSEFloat &rayDirX, SSEFloat &rayDirY, SSEFloat &rayDirZ,
+										SSEFloat &intPointX, SSEFloat &intPointY, SSEFloat &intPointZ,
 										SSEFloat &reflectedX, SSEFloat &reflectedY, SSEFloat &reflectedZ)
 	{
 		// Calculate the sphere normal at this point;
@@ -27,7 +27,7 @@ class RtSphere {
 	// An SSE-optimised version of an already optimised ray-sphere intersection
 	// algorithm. Also taken from PixelMachine at www.superjer.com.
 	// The variable names are poor but they are in the quadratic formula too.
-	SSEFloat IntersectTest(const Ray& rays) const
+	SSEFloat IntersectTest(Ray& rays) const
 	{
 		SSEFloat t = minusOne;
 

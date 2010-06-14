@@ -6,18 +6,18 @@ package com.goeswhere.tracer;
 using namespace boost;
 
 using namespace std;
-const float EPSILON = 0.001f;
-const float defaultViewportWidth = 0.1f;
-const float defaultNearClip = 0.1f;
-const int defaultThreads = 1;
-const int maxThreads = 8;
+float EPSILON = 0.001f;
+float defaultViewportWidth = 0.1f;
+float defaultNearClip = 0.1f;
+int defaultThreads = 1;
+int maxThreads = 8;
 
-const int defaultScreenWidth = 12800;
-const int defaultScreenHeight = 7200;
+int defaultScreenWidth = 12800;
+int defaultScreenHeight = 7200;
 
-const SSEFloat sseOne = _mm_set1_ps(1.0f);
+SSEFloat sseOne = _mm_set1_ps(1.0f);
 
-const int bytesInBitmapHeader = 54;
+int bytesInBitmapHeader = 54;
 
 RTSphere spheres[10];
 unsigned int numSpheres;
@@ -25,13 +25,13 @@ unsigned int numSpheres;
 RTLight lights[10];
 unsigned int numLights;
 
-void render(AJRGB* pixelData, const int screenWidth, const int screenHeight, const int threadID, const int numThreads);
-inline SSEFloat getNearestObstruction(const Ray& rays);
-void raytrace(SSERGB& colour, const Ray& rays, const int iteration, const int w, const int h);
-void raytraceNonSSE(AJRGB &p, const Ray &ray);
+void render(AJRGB* pixelData, int screenWidth, int screenHeight, int threadID, int numThreads);
+inline SSEFloat getNearestObstruction(Ray& rays);
+void raytrace(SSERGB& colour, Ray& rays, int iteration, int w, int h);
+void raytraceNonSSE(AJRGB &p, Ray &ray);
 void setupScene();
-void startRender(AJRGB* pixelData, const int width, const int height, int numThreads);
-void writeBitmap(AJRGB* pixelData, const int screenWidth, const int screenHeight, const int threadCount);
+void startRender(AJRGB* pixelData, int width, int height, int numThreads);
+void writeBitmap(AJRGB* pixelData, int screenWidth, int screenHeight, int threadCount);
 
 #ifndef _WIN32
 # include <ctime>
@@ -90,7 +90,7 @@ class CppTracer {
 
 	inline SSEFloat SetFromUIntPtr(unsigned int* p)
 	{
-		__m128i V = _mm_loadu_si128( (const __m128i*)p );
+		__m128i V = _mm_loadu_si128( (__m128i*)p );
 	    return reinterpret_cast<__m128 *>(&V)[0];
 	}
 
@@ -228,7 +228,7 @@ class CppTracer {
 		// End of scene data.
 	}
 
-	void startRender(AJRGB* pixelData, const int width, const int height, int numThreads)
+	void startRender(AJRGB* pixelData, int width, int height, int numThreads)
 	{
 		if(numThreads < 1)
 			numThreads = 1;
@@ -252,12 +252,12 @@ class CppTracer {
 	}
 
 
-	void render(AJRGB* pixelData, const int width, const int height, const int threadID, const int numThreads)
+	void render(AJRGB* pixelData, int width, int height, int threadID, int numThreads)
 	{
 		// Calculate the height of the viewport depending on its width and the aspect
 		// ratio of the image.
-		const float viewportWidth = defaultViewportWidth;
-		const float viewportHeight = viewportWidth / ((float)width / height);
+		float viewportWidth = defaultViewportWidth;
+		float viewportHeight = viewportWidth / ((float)width / height);
 
 		// Calculate the width and height of a pixel, normally square.
 		SSEFloat pixelWidth = _mm_set1_ps(viewportWidth / width);
@@ -327,7 +327,7 @@ class CppTracer {
 	SSEFloat trues = _mm_cmpeq_ps(zero, zero);
 	SSEFloat miss = _mm_set1_ps(0xFFFFFFFF);
 
-	void raytrace(SSERGB& colour, const Ray& rays, const int iteration, const int w, const int h)
+	void raytrace(SSERGB& colour, Ray& rays, int iteration, int w, int h)
 	{
 		if(iteration > 10)
 			return;
@@ -472,7 +472,7 @@ class CppTracer {
 				}
 
 				// Calculate dot product for Diffuse Lighting.
-				const SSEFloat dotProduct = DotSSE(sphereNormalX, sphereNormalY, sphereNormalZ,
+				SSEFloat dotProduct = DotSSE(sphereNormalX, sphereNormalY, sphereNormalZ,
 											lightDirX, lightDirY, lightDirZ);
 
 				SSEFloat dpgtZeroMask = _mm_cmpgt_ps(dotProduct, _mm_setzero_ps());
@@ -527,7 +527,7 @@ class CppTracer {
 												reflectionX, reflectionY, reflectionZ);
 
 					// Calculate the specular dot product
-					const SSEFloat specDP = DotSSE(rays.directionX, rays.directionY, rays.directionZ,
+					SSEFloat specDP = DotSSE(rays.directionX, rays.directionY, rays.directionZ,
 													reflectionX, reflectionY, reflectionZ);
 
 					for(int r = 0; r < 4; r++)
@@ -535,7 +535,7 @@ class CppTracer {
 						// If this ray is hitting this sphere, and it's dot product > 0
 						if(nearest[r] == sphereIndex && asFloatArray(specDP)[r] > 0)
 						{
-							const float specular = pow(asFloatArray(specDP)[r], 10) * sphere.GetSpecular();
+							float specular = pow(asFloatArray(specDP)[r], 10) * sphere.GetSpecular();
 
 							//SSEFloat sseSpecular
 							asFloatArray(colour.red)[r] += specular;
@@ -548,7 +548,7 @@ class CppTracer {
 		}
 	}
 
-	SSEFloat getNearestObstruction(const Ray& rays)
+	SSEFloat getNearestObstruction(Ray& rays)
 	{
 		SSEFloat nearestObstruction = _mm_set1_ps(0xffffffff);
 		SSEFloat zero = _mm_setzero_ps();
@@ -570,12 +570,12 @@ class CppTracer {
 	// Write the final bitmap to disk. Code adapted from another raytracer
 	// from www.superjer.com under a "do whatever you like with this code"
 	// license.
-	void writeBitmap(AJRGB* pixelData, const int w, const int h, const int tc)
+	void writeBitmap(AJRGB* pixelData, int w, int h, int tc)
 	{
 		FILE *f;
 
 		// 54 bytes in the bitmap file header plus 3 bytes per pixel.
-		const int filesize = 3 * w * h + bytesInBitmapHeader;
+		int filesize = 3 * w * h + bytesInBitmapHeader;
 
 		unsigned char bmpfileheader[14] = {'B','M', 0,0,0,0, 0,0, 0,0, 54,0,0,0}
 		unsigned char bmpinfoheader[40] = { 40,0,0,0, 0,0,0,0, 0,0,0,0, 1,0, 24,0}
@@ -606,10 +606,10 @@ class CppTracer {
 
 		// Every 'line' of bitmap data must have a multiple of 4 bytes, so we may
 		// need to write up to 3 bytes of extra data.
-		const unsigned char bmppad[3] = {0,0,0}
+		unsigned char bmppad[3] = {0,0,0}
 
 		// Calculate how many bytes need to be written as padding.
-		const int pad = (3 * w) % 4;
+		int pad = (3 * w) % 4;
 
 		// Bitmaps must be written from the bottom row upwards rather than the top
 		// down.
@@ -617,7 +617,7 @@ class CppTracer {
 		{
 			// For each row in the image, calculate its position in the array
 			// and write it out.
-			const int rowNum = y * w;
+			int rowNum = y * w;
 
 			// Written in BGR order, 1 row at a time.
 			fwrite(&pixelData[rowNum], 1, 3 * w, f);

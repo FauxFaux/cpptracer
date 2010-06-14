@@ -9,7 +9,7 @@ class RTSphere
 		radiusSq = _mm_set1_ps(0);
 	}
 
-	RTSphere(const V3& _position, const float _radius, const SSERGB& _colour) :
+	RTSphere(V3& _position, float _radius, SSERGB& _colour) :
 				position(_position), colour(_colour), radius(_radius), diffuse(1), specular(0), reflection(0)
 	{
 		radiusSq = _mm_set1_ps(_radius * _radius);
@@ -29,9 +29,9 @@ class RTSphere
 	void SetSpecular(float _specular) { specular = _specular; }
 	void SetReflection(float _reflection) { reflection = _reflection; }
 
-	SSEFloat IntersectTest(const Ray& ray) const;
-	void ReflectRayAtPoint(const SSEFloat &rayDirx, const SSEFloat &rayDirY, const SSEFloat &rayDirZ,
-								const SSEFloat &intPointX, const SSEFloat &intPointY, const SSEFloat &intPointZ,
+	SSEFloat IntersectTest(Ray& ray) const;
+	void ReflectRayAtPoint(SSEFloat &rayDirx, SSEFloat &rayDirY, SSEFloat &rayDirZ,
+								SSEFloat &intPointX, SSEFloat &intPointY, SSEFloat &intPointZ,
 								SSEFloat &reflectedX, SSEFloat &reflectedY, SSEFloat &reflectedZ) const;
 
 	V3 position;

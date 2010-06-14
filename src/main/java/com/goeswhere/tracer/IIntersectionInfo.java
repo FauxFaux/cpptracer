@@ -1,14 +1,9 @@
 package com.goeswhere.tracer;
 
-#pragma once
-
-#include "pixel.h"
-#include "rtobject.h"
-
 class IntersectionInfo
 {
-public:
-	IntersectionInfo(const RTObject* objects, const AJRGB* c) : objectPtrs(objects), colours(c) { };
+
+	IntersectionInfo(const RTObject* objects, const AJRGB* c) : objectPtrs(objects), colours(c) { }
 
 	~IntersectionInfo()
 	{
@@ -18,7 +13,6 @@ public:
 	void SetDistances(__m128 d) { distance = d; }
 	void SetNormal(__m128 x, __m128 y, __m128 z) { normalX = x; normalY = y; normalZ = z; }
 
-protected:
 
 	__m128 distance;
 	__m128 normalX;
@@ -27,4 +21,4 @@ protected:
 	const RTObject* objectPtrs;
 	const AJRGB* colours;
 
-};
+}

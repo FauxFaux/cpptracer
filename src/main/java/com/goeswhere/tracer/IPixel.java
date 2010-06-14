@@ -3,7 +3,7 @@ package com.goeswhere.tracer;
 class AJRGB
 {
 	AJRGB() : red(0), green(0), blue(0) { }
-	AJRGB(const uchar R, const uchar G, const uchar B) : red(R), green(G), blue(B) { }
+	AJRGB(uchar R, uchar G, uchar B) : red(R), green(G), blue(B) { }
 
 	uchar blue;
 	uchar green;
