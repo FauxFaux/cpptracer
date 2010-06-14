@@ -1,14 +1,14 @@
 package com.goeswhere.tracer;
 
-struct V3
+class V3
 {
-	V3() : x(0), y(0), z(0) { };
-	V3(const float _x, const float _y, const float _z) : x(_x), y(_y), z(_z) { };
+	V3() : x(0), y(0), z(0) { }
+	V3(const float _x, const float _y, const float _z) : x(_x), y(_y), z(_z) { }
 
 	float x;
 	float y;
 	float z;
-};
+}
 
 void Add(const V3& a, const V3& b, V3& out);
 float Dot(const V3& a, const V3& b);

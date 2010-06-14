@@ -1,6 +1,6 @@
 package com.goeswhere.tracer;
 
-struct AJRGB
+class AJRGB
 {
 	AJRGB() : red(0), green(0), blue(0) { }
 	AJRGB(const uchar R, const uchar G, const uchar B) : red(R), green(G), blue(B) { }
@@ -8,9 +8,9 @@ struct AJRGB
 	uchar blue;
 	uchar green;
 	uchar red;
-};
+}
 
-struct SSERGB
+class SSERGB
 {
 	SSERGB(float r, float g, float b)
 	{
@@ -20,4 +20,4 @@ struct SSERGB
 	}
 
 	SSEFloat red, green, blue;
-};
+}

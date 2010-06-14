@@ -40,7 +40,7 @@ void writeBitmap(AJRGB* pixelData, const int screenWidth, const int screenHeight
 # include <windows.h>
 #endif
 
-struct timer
+class timer
 {
 #ifndef _WIN32
 	double start;
@@ -78,7 +78,7 @@ struct timer
 	{
 		std::cout << seconds * 1000 << "ms" << std::endl;
 	}
-};
+}
 
 inline SSEFloat SetFromUInt(unsigned int x)
 {
@@ -358,7 +358,7 @@ void raytrace(SSERGB& colour, const Ray& rays, const int iteration, const int w,
 	ALIGN16 unsigned int nearest[4];
 	_mm_store_ps((float*)nearest, sseNearest);
 
-	ALIGN16 unsigned int spheresHit[4] = {0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF};
+	ALIGN16 unsigned int spheresHit[4] = {0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF}
 
 	// NO idea how to sse this.
 	for(int n = 0; n < 4; n++)
@@ -575,8 +575,8 @@ void writeBitmap(AJRGB* pixelData, const int w, const int h, const int tc)
 	// 54 bytes in the bitmap file header plus 3 bytes per pixel.
 	const int filesize = 3 * w * h + bytesInBitmapHeader;
 
-	unsigned char bmpfileheader[14] = {'B','M', 0,0,0,0, 0,0, 0,0, 54,0,0,0};
-	unsigned char bmpinfoheader[40] = { 40,0,0,0, 0,0,0,0, 0,0,0,0, 1,0, 24,0};
+	unsigned char bmpfileheader[14] = {'B','M', 0,0,0,0, 0,0, 0,0, 54,0,0,0}
+	unsigned char bmpinfoheader[40] = { 40,0,0,0, 0,0,0,0, 0,0,0,0, 1,0, 24,0}
 
 	bmpfileheader[ 2] = (unsigned char)(filesize    );
     bmpfileheader[ 3] = (unsigned char)(filesize>> 8);
@@ -604,7 +604,7 @@ void writeBitmap(AJRGB* pixelData, const int w, const int h, const int tc)
 
 	// Every 'line' of bitmap data must have a multiple of 4 bytes, so we may
 	// need to write up to 3 bytes of extra data.
-	const unsigned char bmppad[3] = {0,0,0};
+	const unsigned char bmppad[3] = {0,0,0}
 
 	// Calculate how many bytes need to be written as padding.
 	const int pad = (3 * w) % 4;
