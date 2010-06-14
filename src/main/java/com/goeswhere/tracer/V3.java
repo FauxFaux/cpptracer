@@ -1,4 +1,4 @@
-#include "stdafx.h"
+package com.goeswhere.tracer;
 
 void Add(const V3& a, const V3& b, V3& out)
 {
@@ -12,7 +12,7 @@ float Dot(const V3& a, const V3& b)
 	return a.x * b.x + a.y * b.y + a.z * b.z;
 }
 
-SSEFloat DotSSE(const SSEFloat &ax, const SSEFloat &ay, const SSEFloat &az, 
+SSEFloat DotSSE(const SSEFloat &ax, const SSEFloat &ay, const SSEFloat &az,
 			  const SSEFloat &bx, const SSEFloat &by, const SSEFloat &bz)
 {
 	return _mm_add_ps(_mm_add_ps(_mm_mul_ps(ax, bx), _mm_mul_ps(ay, by)), _mm_mul_ps(az, bz));
@@ -56,15 +56,15 @@ void Normalize(V3 &out)
 }
 
 // The formula for reflecting a vector in a normal.
-void ReflectSSE(const SSEFloat &rayDirX, const SSEFloat &rayDirY, const SSEFloat &rayDirZ, 
+void ReflectSSE(const SSEFloat &rayDirX, const SSEFloat &rayDirY, const SSEFloat &rayDirZ,
 				const SSEFloat &normalX, const SSEFloat &normalY, const SSEFloat &normalZ,
 				SSEFloat &reflectedX, SSEFloat &reflectedY, SSEFloat &reflectedZ)
 {
-	reflectedX = rayDirX; 
-	reflectedY = rayDirY; 
+	reflectedX = rayDirX;
+	reflectedY = rayDirY;
 	reflectedZ = rayDirZ;
 
-	SSEFloat numByTwo = 
+	SSEFloat numByTwo =
 		_mm_mul_ps(_mm_add_ps(_mm_add_ps(_mm_mul_ps(rayDirX, normalX), _mm_mul_ps(rayDirY, normalY)), _mm_mul_ps(rayDirZ, normalZ)), _mm_set_ps1(2));
 
 	reflectedX = _mm_sub_ps(reflectedX, _mm_mul_ps(numByTwo, normalX));

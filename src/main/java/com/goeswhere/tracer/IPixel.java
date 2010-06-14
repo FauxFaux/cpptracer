@@ -1,6 +1,6 @@
-#pragma once
+package com.goeswhere.tracer;
 
-struct AJRGB 
+struct AJRGB
 {
 	AJRGB() : red(0), green(0), blue(0) { }
 	AJRGB(const uchar R, const uchar G, const uchar B) : red(R), green(G), blue(B) { }

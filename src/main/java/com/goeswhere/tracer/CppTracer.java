@@ -1,43 +1,7 @@
-// A C++ Raytracer written by Adam Miles.
+package com.goeswhere.tracer;
 
-// OpenMP doesn't support > 64 threads on my machine, and is thus cheating :p.
-//#define USEOPENMP
-
-#include "stdafx.h"
-#include "intersectioninfo.h"
-#include "pixel.h"
-#include "rtsphere.h"
-#include "rtlight.h"
-
-#if defined(USEOPENMP)
-#include <omp.h>
-#endif
-
-#include <boost/thread.hpp>
-#include <boost/bind.hpp>
-#include <boost/ptr_container/ptr_vector.hpp>
-#include <boost/foreach.hpp>
-
-#ifndef _WINDOWS
-# if defined(WIN32) || defined(_WIN32)
-#  define _WINDOWS
-# endif
-#endif
-
-#ifdef _WINDOWS
-# define asFloatArray(x) ((x).m128_f32)
-# define asUIntArray(x) ((x).m128_u32)
-#else
-# include <xmmintrin.h>
 # define asFloatArray(x) ((float*)(&x))
 # define asUIntArray(x) ((unsigned int*)(&x))
-#endif
-
-#ifdef __GNUC__
-# define ALIGN16 __attribute__ ((aligned (16)))
-#else
-# define ALIGN16 __declspec(align(16))
-#endif
 
 using namespace boost;
 
@@ -105,14 +69,14 @@ struct timer
 	{
 		LARGE_INTEGER end, freq;
 		QueryPerformanceCounter(&end);
-		QueryPerformanceFrequency(&freq);	
+		QueryPerformanceFrequency(&freq);
 		return static_cast<double>(end.QuadPart-start.QuadPart)/freq.QuadPart;
 	}
 #endif
 
 	void output(double seconds)
 	{
-		std::cout << seconds * 1000 << "ms" << std::endl;	
+		std::cout << seconds * 1000 << "ms" << std::endl;
 	}
 };
 
@@ -133,7 +97,7 @@ inline SSEFloat SetFromUIntPtr(unsigned int* p)
 
 
 int main(int argc, char *argv[])
-{	
+{
 	if(argc == 1)
 	{
 		printf(" - cppraytracer[.exe] [width] [height] [runCount] [imageCount]\n");
@@ -276,9 +240,9 @@ omp_set_num_threads(numThreads);
 	}
 #else
 	ptr_vector<thread> threads;
- 
+
 	for(int t = 0; t < numThreads; ++t)
-		threads.push_back(new thread(bind(&render, pixelData, width, height, t, numThreads))); 
+		threads.push_back(new thread(bind(&render, pixelData, width, height, t, numThreads)));
 
 	BOOST_FOREACH(thread& t, threads)
 		t.join();
@@ -318,7 +282,7 @@ void render(AJRGB* pixelData, const int width, const int height, const int threa
 		for(unsigned int x = 0; x < width; x+=4)
 		{
 			SSEFloat sseX = _mm_set1_ps(x);
-			
+
 			rayPacket.directionX = _mm_mul_ps(_mm_sub_ps(_mm_add_ps(sseX, a), halfX), pixelWidth);
 			rayPacket.directionY = _mm_sub_ps(_mm_setzero_ps(), _mm_mul_ps(_mm_sub_ps(sseY, halfY), pixelHeight));
 
@@ -370,14 +334,14 @@ void raytrace(SSERGB& colour, const Ray& rays, const int iteration, const int w,
 	SSEFloat sseNearest = trues;
 
 	unsigned int uniqueSpheres = 0;
-	
+
 	// Set the nearest intersection to as large as possible.
 	SSEFloat nearestDistance = _mm_set_ps1(std::numeric_limits<float>().max());
 
 	// For every sphere in the scene see if the ray intersects it.
 	for(unsigned int s = 0; s < numSpheres; s++)
 	{
-		// Intersect the packet of rays with the sphere and have the distance to 
+		// Intersect the packet of rays with the sphere and have the distance to
 		// the intersection point returned.
 		RTSphere& sphere = spheres[s];
 		SSEFloat distance = sphere.IntersectTest(rays);
@@ -391,7 +355,7 @@ void raytrace(SSERGB& colour, const Ray& rays, const int iteration, const int w,
 	}
 
 	sseNearest = Select(trues, sseNearest, isTracingMask);
-	ALIGN16 unsigned int nearest[4];		
+	ALIGN16 unsigned int nearest[4];
 	_mm_store_ps((float*)nearest, sseNearest);
 
 	ALIGN16 unsigned int spheresHit[4] = {0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF};
@@ -422,7 +386,7 @@ void raytrace(SSERGB& colour, const Ray& rays, const int iteration, const int w,
 
 		SSEFloat sseSI = SetFromUInt(sphereIndex);
 		SSEFloat nearestMask = _mm_cmpeq_ps(sseNearest, sseSI);
-		
+
 		// Calculate the distance to intersection point minus the small amount
 		// to avoid the intersection point actually intersecting the sphere.
 		SSEFloat mult = _mm_mul_ps(nearestDistance, _mm_set_ps1(1.0f - EPSILON));
@@ -477,14 +441,14 @@ void raytrace(SSERGB& colour, const Ray& rays, const int iteration, const int w,
 			{
 				SSEFloat reflectionX, reflectionY, reflectionZ;
 
-				ReflectSSE(rays.directionX, rays.directionY, rays.directionZ, 
+				ReflectSSE(rays.directionX, rays.directionY, rays.directionZ,
 							sphereNormalX, sphereNormalY, sphereNormalZ,
 							reflectionX, reflectionY, reflectionZ);
 
 				NormalizeSSE(reflectionX, reflectionY, reflectionZ);
 
 				Ray reflectedPacket;
-				
+
 				reflectedPacket.directionX = reflectionX;
 				reflectedPacket.directionY = reflectionY;
 				reflectedPacket.directionZ = reflectionZ;
@@ -493,7 +457,7 @@ void raytrace(SSERGB& colour, const Ray& rays, const int iteration, const int w,
 				reflectedPacket.positionZ = intPointZ;
 
 				raytrace(colour, reflectedPacket, iteration + 1, w, h);
-				
+
 				SSEFloat sseRF = _mm_set1_ps(reflectionFactor);
 
 				SSEFloat newRed = _mm_mul_ps(_mm_mul_ps(colour.red, sseRF), sphereColour.red);
@@ -506,7 +470,7 @@ void raytrace(SSERGB& colour, const Ray& rays, const int iteration, const int w,
 			}
 
 			// Calculate dot product for Diffuse Lighting.
-			const SSEFloat dotProduct = DotSSE(sphereNormalX, sphereNormalY, sphereNormalZ, 
+			const SSEFloat dotProduct = DotSSE(sphereNormalX, sphereNormalY, sphereNormalZ,
 										lightDirX, lightDirY, lightDirZ);
 
 			SSEFloat dpgtZeroMask = _mm_cmpgt_ps(dotProduct, _mm_setzero_ps());
@@ -532,7 +496,7 @@ void raytrace(SSERGB& colour, const Ray& rays, const int iteration, const int w,
 
 				SSEFloat lightPower = _mm_set1_ps(light.power);
 				SSEFloat sphereDiffuse = _mm_set1_ps(sphere.GetDiffuse());
-					
+
 				SSEFloat newRed = _mm_add_ps(_mm_mul_ps(_mm_mul_ps(_mm_mul_ps(_mm_mul_ps(sphereColour.red, dotProduct), lightPower), sphereDiffuse), shade), colour.red);
 				SSEFloat newGreen = _mm_add_ps(_mm_mul_ps(_mm_mul_ps(_mm_mul_ps(_mm_mul_ps(sphereColour.green, dotProduct), lightPower), sphereDiffuse), shade), colour.green);
 				SSEFloat newBlue = _mm_add_ps(_mm_mul_ps(_mm_mul_ps(_mm_mul_ps(_mm_mul_ps(sphereColour.blue, dotProduct), lightPower), sphereDiffuse), shade), colour.blue);
@@ -556,12 +520,12 @@ void raytrace(SSERGB& colour, const Ray& rays, const int iteration, const int w,
 				// Calculate the vector along which light will be reflected off the
 				// surface of the sphere and store it in reflectionX/Y/Z.
 				SSEFloat reflectionX, reflectionY, reflectionZ;
-				sphere.ReflectRayAtPoint(toLightVectorX, toLightVectorY, toLightVectorZ, 
-											intPointX, intPointY, intPointZ, 
+				sphere.ReflectRayAtPoint(toLightVectorX, toLightVectorY, toLightVectorZ,
+											intPointX, intPointY, intPointZ,
 											reflectionX, reflectionY, reflectionZ);
 
-				// Calculate the specular dot product 
-				const SSEFloat specDP = DotSSE(rays.directionX, rays.directionY, rays.directionZ, 
+				// Calculate the specular dot product
+				const SSEFloat specDP = DotSSE(rays.directionX, rays.directionY, rays.directionZ,
 												reflectionX, reflectionY, reflectionZ);
 
 				for(int r = 0; r < 4; r++)
@@ -609,7 +573,7 @@ void writeBitmap(AJRGB* pixelData, const int w, const int h, const int tc)
 	FILE *f;
 
 	// 54 bytes in the bitmap file header plus 3 bytes per pixel.
-	const int filesize = 3 * w * h + bytesInBitmapHeader;	
+	const int filesize = 3 * w * h + bytesInBitmapHeader;
 
 	unsigned char bmpfileheader[14] = {'B','M', 0,0,0,0, 0,0, 0,0, 54,0,0,0};
 	unsigned char bmpinfoheader[40] = { 40,0,0,0, 0,0,0,0, 0,0,0,0, 1,0, 24,0};
@@ -646,7 +610,7 @@ void writeBitmap(AJRGB* pixelData, const int w, const int h, const int tc)
 	const int pad = (3 * w) % 4;
 
 	// Bitmaps must be written from the bottom row upwards rather than the top
-	// down. 
+	// down.
 	for(int y = h - 1; y > -1; y--)
 	{
 		// For each row in the image, calculate its position in the array
@@ -655,7 +619,7 @@ void writeBitmap(AJRGB* pixelData, const int w, const int h, const int tc)
 
 		// Written in BGR order, 1 row at a time.
 		fwrite(&pixelData[rowNum], 1, 3 * w, f);
-			
+
 		// If the rows need padding, write out 4 minus pad bytes of zero now.
 		if(pad > 0)
 			fwrite(bmppad, 1, 4 - pad, f);

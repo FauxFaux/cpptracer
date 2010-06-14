@@ -1,20 +1,17 @@
-#pragma once
+package com.goeswhere.tracer;
 
-#include "v3.h"
-#include "pixel.h"
-
-class RTSphere 
+class RTSphere
 {
 public:
 
-	RTSphere() : radius(0), diffuse(1), specular(0), reflection(0), colour(1,1,1) 
-	{ 
+	RTSphere() : radius(0), diffuse(1), specular(0), reflection(0), colour(1,1,1)
+	{
 		radiusSq = _mm_set1_ps(0);
 	};
 
-	RTSphere(const V3& _position, const float _radius, const SSERGB& _colour) : 
-				position(_position), colour(_colour), radius(_radius), diffuse(1), specular(0), reflection(0) 
-	{ 
+	RTSphere(const V3& _position, const float _radius, const SSERGB& _colour) :
+				position(_position), colour(_colour), radius(_radius), diffuse(1), specular(0), reflection(0)
+	{
 		radiusSq = _mm_set1_ps(_radius * _radius);
 	};
 
@@ -33,7 +30,7 @@ public:
 	void SetReflection(float _reflection) { reflection = _reflection; }
 
 	SSEFloat IntersectTest(const Ray& ray) const;
-	void ReflectRayAtPoint(const SSEFloat &rayDirx, const SSEFloat &rayDirY, const SSEFloat &rayDirZ, 
+	void ReflectRayAtPoint(const SSEFloat &rayDirx, const SSEFloat &rayDirY, const SSEFloat &rayDirZ,
 								const SSEFloat &intPointX, const SSEFloat &intPointY, const SSEFloat &intPointZ,
 								SSEFloat &reflectedX, SSEFloat &reflectedY, SSEFloat &reflectedZ) const;
 

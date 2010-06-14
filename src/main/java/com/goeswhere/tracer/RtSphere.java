@@ -1,11 +1,8 @@
-#include "stdafx.h"
-#include "rtsphere.h"
-
-using namespace std;
+package com.goeswhere.tracer;
 
 
 // At a given point in the world, reflect a ray off the sphere's normal to that point.
-void RTSphere::ReflectRayAtPoint(const SSEFloat &rayDirX, const SSEFloat &rayDirY, const SSEFloat &rayDirZ, 
+void RTSphere::ReflectRayAtPoint(const SSEFloat &rayDirX, const SSEFloat &rayDirY, const SSEFloat &rayDirZ,
 									const SSEFloat &intPointX, const SSEFloat &intPointY, const SSEFloat &intPointZ,
 									SSEFloat &reflectedX, SSEFloat &reflectedY, SSEFloat &reflectedZ) const
 {
@@ -17,7 +14,7 @@ void RTSphere::ReflectRayAtPoint(const SSEFloat &rayDirX, const SSEFloat &rayDir
 	// Normalise the sphere normal.
 	NormalizeSSE(normalX, normalY, normalZ);
 
-	// Reflect the ray rayDir in normal and store in reflected. 
+	// Reflect the ray rayDir in normal and store in reflected.
 	ReflectSSE(rayDirX, rayDirY, rayDirZ, normalX, normalY, normalZ, reflectedX, reflectedY, reflectedZ);
 
 	// Normalise the reflected ray.
@@ -31,9 +28,9 @@ SSEFloat two = _mm_set_ps1(2);
 // algorithm. Also taken from PixelMachine at www.superjer.com.
 // The variable names are poor but they are in the quadratic formula too.
 SSEFloat RTSphere::IntersectTest(const Ray& rays) const
-{	
+{
 	SSEFloat t = minusOne;
-	
+
 	SSEFloat sPosX = _mm_set_ps1(position.x);
 	SSEFloat sPosY = _mm_set_ps1(position.y);
 	SSEFloat sPosZ = _mm_set_ps1(position.z);
@@ -72,7 +69,7 @@ SSEFloat RTSphere::IntersectTest(const Ray& rays) const
 
 	SSEFloat one = _mm_set_ps1(1);
 	a = _mm_div_ps(one, a);
-	d = _mm_sqrt_ps(d);	
+	d = _mm_sqrt_ps(d);
 
 	SSEFloat newerT = _mm_mul_ps(_mm_sub_ps(_mm_sub_ps(_mm_setzero_ps(), d), b), a);
 	t = Select(t, newerT, answerUnknownMask);

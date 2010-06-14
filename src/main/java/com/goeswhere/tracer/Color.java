@@ -1,5 +1,4 @@
-#include "stdafx.h"
-#include "color.h"
+package com.goeswhere.tracer;
 
 Color::Color(void)
 {

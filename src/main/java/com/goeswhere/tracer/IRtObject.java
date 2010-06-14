@@ -1,4 +1,4 @@
-#pragma once
+package com.goeswhere.tracer;
 
 class RTObject
 {
