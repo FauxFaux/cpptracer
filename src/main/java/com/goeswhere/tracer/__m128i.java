@@ -1,8 +1,8 @@
 package com.goeswhere.tracer;
 
-public class SSEFloat extends __m128 {
+public class __m128i {
 
-	public SSEFloat(__m128i v, int i) {
+	public __m128i(int p) {
 		throw new UnsupportedOperationException();
 	}
 

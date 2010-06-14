@@ -8,18 +8,18 @@ class CppTracer {
 	int defaultThreads = 1;
 	int maxThreads = 8;
 
-	int defaultScreenWidth = 12800;
-	int defaultScreenHeight = 7200;
+	static int defaultScreenWidth = 12800;
+	static int defaultScreenHeight = 7200;
 
 	SSEFloat sseOne = _mm_set1_ps(1.0f);
 
 	int bytesInBitmapHeader = 54;
 
-	RtSphere[] spheres = new RtSphere[10];
-	int numSpheres;
+	static RtSphere[] spheres = new RtSphere[10];
+	static int numSpheres;
 
-	RtLight[] lights = new RtLight[10];
-	int numLights;
+	static RtLight[] lights = new RtLight[10];
+	static int numLights;
 
 	class timer
 	{
@@ -46,13 +46,13 @@ class CppTracer {
 	SSEFloat SetFromUInt(int x)
 	{
 		__m128i V = _mm_set1_epi32( x );
-	    return reinterpret_cast<__m128 *>(&V)[0];
+	    return new SSEFloat(V, 0);
 	}
 
 	SSEFloat SetFromUIntPtr(int p)
 	{
-		__m128i V = _mm_loadu_si128( (__m128i*)p );
-	    return reinterpret_cast<__m128 *>(&V)[0];
+		__m128i V = _mm_loadu_si128( new __m128i(p) );
+	    return new SSEFloat(V, 0);
 	}
 
 
@@ -61,7 +61,7 @@ class CppTracer {
 
 	public static void main(String... origv)
 	{
-		final int argc = argv.length + 1;
+		final int argc = origv.length + 1;
 		final String[] argv = new String[argc];
 		System.arraycopy(origv, 0, argv, 1, origv.length);
 
@@ -102,17 +102,18 @@ class CppTracer {
 		setupScene();
 
 		// Render the image
-		AJRGB* pixelData = new AJRGB[width * height];
+		AJRGB[] pixelData = new AJRGB[width * height];
 
-		double lowest = std::numeric_limits<double>().max();
+		double lowest = Double.MAX_VALUE;
 		int lowestThreads = 0;
 
 		for (int i=1; i<=height; ++i)
 			if (height%i == 0)
 			{
-				memset(pixelData, 0, sizeof(AJRGB) * width * height);
+				for (AJRGB a : pixelData)
+					a.zero();
 
-				double iLowest = std::numeric_limits<double>().max();
+				double iLowest = Double.MAX_VALUE;
 
 				for(int r = 0; r < numRuns; r++)
 				{
@@ -129,21 +130,25 @@ class CppTracer {
 						iLowest = time;
 				}
 
-				cout << setw(4) << right << i << ": " << iLowest * 1000 << std::endl;
+				System.out.println(i + ": " + (iLowest * 1000));
 
 				if(i <= writeImagesUpTo)
 					writeBitmap(pixelData, width, height, i);
 			}
 
-			std::cout << setw(4) << right << "Interleaved version." << std::endl;
-			std::cout << setw(4) << right << "Lowest: " << lowest * 1000 << "ms at " << lowestThreads << " threads." << std::endl;
-
-		delete [] pixelData;
-
-		return 0;
+		System.out.println("Interleaved version.");
+		System.out.println("Lowest: " + (lowest * 1000) + "ms at " + lowestThreads + " threads.");
 	}
 
-	void setupScene()
+	private static int atoi(String string) {
+		return Integer.parseInt(string);
+	}
+
+	private static void printf(String string) {
+		System.out.print(string);
+	}
+
+	static void setupScene()
 	{
 		// Just some code to put a sphere and a light into the scene, ideally
 		// this would be read in from some kind of script / scene file rather
@@ -193,7 +198,7 @@ class CppTracer {
 		// End of scene data.
 	}
 
-	void startRender(AJRGB pixelData, int width, int height, int numThreads)
+	static void startRender(AJRGB[] pixelData, int width, int height, int numThreads)
 	{
 		if(numThreads < 1)
 			numThreads = 1;
@@ -294,7 +299,7 @@ class CppTracer {
 		int uniqueSpheres = 0;
 
 		// Set the nearest intersection to as large as possible.
-		SSEFloat nearestDistance = _mm_set_ps1(std::numeric_limits<float>().max());
+		SSEFloat nearestDistance = _mm_set_ps1(Float.MAX_VALUE);
 
 		// For every sphere in the scene see if the ray intersects it.
 		for(int s = 0; s < numSpheres; s++)
@@ -313,10 +318,10 @@ class CppTracer {
 		}
 
 		sseNearest = Select(trues, sseNearest, isTracingMask);
-		ALIGN16 unsigned int nearest[4];
-		_mm_store_ps((float*)nearest, sseNearest);
+		int nearest = new int[4];
+		_mm_store_ps(nearest, sseNearest);
 
-		ALIGN16 unsigned int spheresHit[4] = {0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF}
+		int spheresHit = new int [] {0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF};
 
 		// NO idea how to sse this.
 		for(int n = 0; n < 4; n++)
@@ -337,10 +342,10 @@ class CppTracer {
 			}
 		}
 
-		for(unsigned int sh = 0; sh < uniqueSpheres; sh++)
+		for(int sh = 0; sh < uniqueSpheres; sh++)
 		{
-			unsigned int sphereIndex = spheresHit[sh];
-			RtSphere& sphere = spheres[sphereIndex];	// The sphere to be tested.
+			int sphereIndex = spheresHit[sh];
+			RtSphere sphere = spheres[sphereIndex];	// The sphere to be tested.
 
 			SSEFloat sseSI = SetFromUInt(sphereIndex);
 			SSEFloat nearestMask = _mm_cmpeq_ps(sseNearest, sseSI);
@@ -363,9 +368,9 @@ class CppTracer {
 
 			// For every light in the scene, we need to check if it is casting
 			// light onto an object for both diffuse and specular lighting.
-			for (unsigned int i = 0; i < numLights; i++)
+			for (int i = 0; i < numLights; i++)
 			{
-				RTLight& light = lights[i];
+				RTLight light = lights[i];
 
 				// The i'th light's position.
 				SSEFloat lightPosX = _mm_set_ps1(light.position.x);
@@ -382,7 +387,7 @@ class CppTracer {
 				// Normalise the light direction.
 				NormalizeSSE(lightDirX, lightDirY, lightDirZ);
 
-				V3& spherePosition = sphere.GetPosition();
+				V3 spherePosition = sphere.GetPosition();
 
 				// Calculate the normal at the intersection point, for a sphere this is
 				// simply the intersection point - sphere centre, normalised.
@@ -392,7 +397,7 @@ class CppTracer {
 
 				NormalizeSSE(sphereNormalX, sphereNormalY, sphereNormalZ);
 
-				SSERGB& sphereColour = sphere.GetColour();
+				SSERGB sphereColour = sphere.GetColour();
 				float reflectionFactor = sphere.GetReflection();
 
 				if(reflectionFactor > 0)
@@ -526,7 +531,7 @@ class CppTracer {
 	// Write the final bitmap to disk. Code adapted from another raytracer
 	// from www.superjer.com under a "do whatever you like with this code"
 	// license.
-	void writeBitmap(AJRGB pixelData, int w, int h, int tc)
+	static void writeBitmap(AJRGB[] pixelData, int w, int h, int tc)
 	{
 		FILE f;
 

@@ -8,6 +8,10 @@ class AJRGB
 	int blue;
 	int green;
 	int red;
+
+	public void zero() {
+		throw new UnsupportedOperationException();
+	}
 }
 
 class SSERGB
