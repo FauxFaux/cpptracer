@@ -27,7 +27,7 @@ class RtSphere {
 	// An SSE-optimised version of an already optimised ray-sphere intersection
 	// algorithm. Also taken from PixelMachine at www.superjer.com.
 	// The variable names are poor but they are in the quadratic formula too.
-	SSEFloat IntersectTest(Ray& rays) const
+	SSEFloat IntersectTest(Ray& rays)
 	{
 		SSEFloat t = minusOne;
 
