@@ -2,6 +2,20 @@ package com.goeswhere.tracer;
 
 class RtSphere {
 
+	 V3 GetPosition() { return position; }
+	 SSERGB GetColour() { return colour; }
+	 float GetRadius() { return radius; }
+	 float GetDiffuse() { return diffuse; }
+	 float GetSpecular() { return specular; }
+	 float GetReflection() { return reflection; }
+
+	 void SetPosition(V3 _position) { position = _position; }
+	 void SetColour(SSERGB _colour) { colour = _colour; }
+	 void SetRadius(float _radius) { radius = _radius; radiusSq = _mm_set1_ps(radius * radius); }
+	 void SetDiffuse(float _diffuse) { diffuse = _diffuse; }
+	 void SetSpecular(float _specular) { specular = _specular; }
+	 void SetReflection(float _reflection) { reflection = _reflection; }
+
 	RtSphere() { radius = (0); diffuse = (1); specular = (0); reflection = (0); colour = new SSERGB(1,1,1);
 		radiusSq = _mm_set1_ps(0);
 	}

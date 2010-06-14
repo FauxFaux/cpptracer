@@ -13,15 +13,15 @@ public class Stdafx {
 		return _mm_or_ps(vTemp1, vTemp2);
 	}
 
-	int MaskToUInt(SSEFloat mask)
+	long MaskToUInt(SSEFloat mask)
 	{
-		unsigned int CR = 0;
+		long CR = 0;
 	    int iTest = _mm_movemask_ps(mask);
 	    if (iTest==0xf)
 		{
 	        CR = XM_CRMASK_CR6TRUE;
 	    }
-	    else if (!iTest)
+	    else if (0 != iTest)
 	    {
 	        CR = XM_CRMASK_CR6FALSE;
 	    }

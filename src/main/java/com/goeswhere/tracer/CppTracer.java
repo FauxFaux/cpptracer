@@ -153,19 +153,19 @@ class CppTracer {
 		sphere.SetSpecular(0.25f); sphere.SetReflection(0.9f); sphere.SetDiffuse(0.25f);
 		spheres[0] = sphere;
 
-		RtSphere sphere2(V3(-0.3f, 0, 1.75f), 0.15f, SSERGB(1, 1, 0));
+		RtSphere sphere2 = new RtSphere(new V3(-0.3f, 0, 1.75f), 0.15f, new SSERGB(1, 1, 0));
 		sphere2.SetSpecular(0.25f); sphere2.SetReflection(0.25f);
 		spheres[1] = sphere2;
 
-		RtSphere sphere3(V3(0.3f, 0, 1.75f), 0.15f, SSERGB(0, 0, 1));
+		RtSphere sphere3 = new RtSphere(new V3(0.3f, 0, 1.75f), 0.15f, new SSERGB(0, 0, 1));
 		sphere3.SetSpecular(0.25f); sphere3.SetReflection(0.25f);
 		spheres[2] = sphere3;
 
-		RtSphere sphere4(V3(0, 0.3f, 1.75f), 0.15f, SSERGB(1, 0, 0));
+		RtSphere sphere4 = new RtSphere(new V3(0, 0.3f, 1.75f), 0.15f, new SSERGB(1, 0, 0));
 		sphere4.SetSpecular(0.25f); sphere4.SetReflection(0.25f);
 		spheres[3] = sphere4;
 
-		RtSphere sphere5(V3(0, -0.3f, 1.75f), 0.15f, SSERGB(0, 1, 0));
+		RtSphere sphere5 = new RtSphere(new V3(0, -0.3f, 1.75f), 0.15f, new SSERGB(0, 1, 0));
 		sphere5.SetSpecular(0.25f); sphere5.SetReflection(0.25f);
 		spheres[4] = sphere5;
 
@@ -187,25 +187,17 @@ class CppTracer {
 		//sphere9.SetSpecular(0.25f); sphere9.SetReflection(0.25f);
 		//spheres.push_back(sphere9);
 
-		lights[0] = RTLight(V3(0, 0, 1), 1);
+		lights[0] = new RtLight(new V3(0, 0, 1), 1);
 
 		numLights = 1;
 		// End of scene data.
 	}
 
-	void startRender(AJRGB* pixelData, int width, int height, int numThreads)
+	void startRender(AJRGB pixelData, int width, int height, int numThreads)
 	{
 		if(numThreads < 1)
 			numThreads = 1;
 
-	#if defined(USEOPENMP)
-	omp_set_num_threads(numThreads);
-	#pragma omp parallel for
-		for(int t = 0; t < numThreads; ++t)
-		{
-			render(pixelData, width, height, t * (height / numThreads), (height / numThreads));
-		}
-	#else
 		ptr_vector<thread> threads;
 
 		for(int t = 0; t < numThreads; ++t)
@@ -213,11 +205,10 @@ class CppTracer {
 
 		BOOST_FOREACH(thread& t, threads)
 			t.join();
-	#endif
 	}
 
 
-	void render(AJRGB* pixelData, int width, int height, int threadID, int numThreads)
+	void render(AJRGB pixelData, int width, int height, int threadID, int numThreads)
 	{
 		// Calculate the height of the viewport depending on its width and the aspect
 		// ratio of the image.
@@ -238,15 +229,15 @@ class CppTracer {
 		SSEFloat a = _mm_setr_ps(0, 1, 2, 3);
 		SSEFloat twoFiftyFive = _mm_set1_ps(255.0f);
 
-		SSERGB colourPacket(0,0,0);
+		SSERGB colourPacket = new SSERGB(0,0,0);
 
 		// Scanning across in rows from the top
-		for(unsigned int y = threadID; y < height; y+=numThreads)
+		for(long y = threadID; y < height; y+=numThreads)
 		{
 			SSEFloat sseY = _mm_set1_ps(y);
 
 			// Four pixels at a time.
-			for(unsigned int x = 0; x < width; x+=4)
+			for(long x = 0; x < width; x+=4)
 			{
 				SSEFloat sseX = _mm_set1_ps(x);
 
@@ -275,9 +266,9 @@ class CppTracer {
 				colourPacket.green =  _mm_min_ps(colourPacket.green, twoFiftyFive);
 				colourPacket.blue =  _mm_min_ps(colourPacket.blue, twoFiftyFive);
 
-				AJRGB* pixelPtr = pixelData + (x + y * width);
+				AJRGB pixelPtr = pixelData + (x + y * width);
 
-				for(unsigned int i = 0; i < 4; i++)
+				for(int i = 0; i < 4; i++)
 				{
 					pixelPtr[i].red = (uchar)asFloatArray(colourPacket.red)[i];
 					pixelPtr[i].green = (uchar)asFloatArray(colourPacket.green)[i];
@@ -292,7 +283,7 @@ class CppTracer {
 	SSEFloat trues = _mm_cmpeq_ps(zero, zero);
 	SSEFloat miss = _mm_set1_ps(0xFFFFFFFF);
 
-	void raytrace(SSERGB& colour, Ray& rays, int iteration, int w, int h)
+	void raytrace(SSERGB colour, Ray rays, int iteration, int w, int h)
 	{
 		if(iteration > 10)
 			return;
@@ -300,17 +291,17 @@ class CppTracer {
 		SSEFloat isTracingMask = _mm_cmpneq_ps(rays.positionX, miss);
 		SSEFloat sseNearest = trues;
 
-		unsigned int uniqueSpheres = 0;
+		int uniqueSpheres = 0;
 
 		// Set the nearest intersection to as large as possible.
 		SSEFloat nearestDistance = _mm_set_ps1(std::numeric_limits<float>().max());
 
 		// For every sphere in the scene see if the ray intersects it.
-		for(unsigned int s = 0; s < numSpheres; s++)
+		for(int s = 0; s < numSpheres; s++)
 		{
 			// Intersect the packet of rays with the sphere and have the distance to
 			// the intersection point returned.
-			RtSphere& sphere = spheres[s];
+			RtSphere sphere = spheres[s];
 			SSEFloat distance = sphere.IntersectTest(rays);
 
 			SSEFloat distGTZeroMask = _mm_cmpgt_ps(distance, zero);
@@ -513,14 +504,14 @@ class CppTracer {
 		}
 	}
 
-	SSEFloat getNearestObstruction(Ray& rays)
+	SSEFloat getNearestObstruction(Ray rays)
 	{
 		SSEFloat nearestObstruction = _mm_set1_ps(0xffffffff);
 		SSEFloat zero = _mm_setzero_ps();
 
-		for(unsigned int s = 0; s < numSpheres; s++)
+		for(int s = 0; s < numSpheres; s++)
 		{
-			RtSphere& sphere = spheres[s];
+			RtSphere sphere = spheres[s];
 			SSEFloat distance = sphere.IntersectTest(rays);
 
 			SSEFloat gtZeroMask = _mm_cmpgt_ps(distance, zero);
@@ -535,15 +526,15 @@ class CppTracer {
 	// Write the final bitmap to disk. Code adapted from another raytracer
 	// from www.superjer.com under a "do whatever you like with this code"
 	// license.
-	void writeBitmap(AJRGB* pixelData, int w, int h, int tc)
+	void writeBitmap(AJRGB pixelData, int w, int h, int tc)
 	{
-		FILE *f;
+		FILE f;
 
 		// 54 bytes in the bitmap file header plus 3 bytes per pixel.
 		int filesize = 3 * w * h + bytesInBitmapHeader;
 
-		unsigned char bmpfileheader[14] = {'B','M', 0,0,0,0, 0,0, 0,0, 54,0,0,0}
-		unsigned char bmpinfoheader[40] = { 40,0,0,0, 0,0,0,0, 0,0,0,0, 1,0, 24,0}
+		char bmpfileheader[] = new char[] {'B','M', 0,0,0,0, 0,0, 0,0, 54,0,0,0}
+		char bmpinfoheader[40] = new char[] { 40,0,0,0, 0,0,0,0, 0,0,0,0, 1,0, 24,0}
 
 		bmpfileheader[ 2] = (unsigned char)(filesize    );
 	    bmpfileheader[ 3] = (unsigned char)(filesize>> 8);
