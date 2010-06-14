@@ -1,86 +1,67 @@
 package com.goeswhere.tracer;
 
-# define asFloatArray(x) ((float*)(&x))
-# define asUIntArray(x) ((unsigned int*)(&x))
-
-using namespace boost;
-
-using namespace std;
-float EPSILON = 0.001f;
-float defaultViewportWidth = 0.1f;
-float defaultNearClip = 0.1f;
-int defaultThreads = 1;
-int maxThreads = 8;
-
-int defaultScreenWidth = 12800;
-int defaultScreenHeight = 7200;
-
-SSEFloat sseOne = _mm_set1_ps(1.0f);
-
-int bytesInBitmapHeader = 54;
-
-RTSphere spheres[10];
-unsigned int numSpheres;
-
-RTLight lights[10];
-unsigned int numLights;
-
-void render(AJRGB* pixelData, int screenWidth, int screenHeight, int threadID, int numThreads);
-inline SSEFloat getNearestObstruction(Ray& rays);
-void raytrace(SSERGB& colour, Ray& rays, int iteration, int w, int h);
-void raytraceNonSSE(AJRGB &p, Ray &ray);
-void setupScene();
-void startRender(AJRGB* pixelData, int width, int height, int numThreads);
-void writeBitmap(AJRGB* pixelData, int screenWidth, int screenHeight, int threadCount);
-
-#ifndef _WIN32
-# include <ctime>
-# include <sys/time.h>
-#else
-# include <windows.h>
-#endif
-
-class timer
-{
-#ifndef _WIN32
-	double start;
-	timer()
-	{
-		timeval now;
-		gettimeofday(&now,0);
-		start = now.tv_sec + (now.tv_usec / 1000000.0);
-	}
-
-	double End()
-	{
-		timeval now;
-		gettimeofday(&now,0);
-		double end = now.tv_sec + (now.tv_usec / 1000000.0);
-		return static_cast<double>(end-start);
-	}
-#else
-	LARGE_INTEGER start;
-	timer()
-	{
-		QueryPerformanceCounter(&start);
-	}
-
-	double End()
-	{
-		LARGE_INTEGER end, freq;
-		QueryPerformanceCounter(&end);
-		QueryPerformanceFrequency(&freq);
-		return static_cast<double>(end.QuadPart-start.QuadPart)/freq.QuadPart;
-	}
-#endif
-
-	void output(double seconds)
-	{
-		std::cout << seconds * 1000 << "ms" << std::endl;
-	}
-}
-
 class CppTracer {
+
+	# define asFloatArray(x) ((float*)(&x))
+	# define asUIntArray(x) ((unsigned int*)(&x))
+
+
+	float EPSILON = 0.001f;
+	float defaultViewportWidth = 0.1f;
+	float defaultNearClip = 0.1f;
+	int defaultThreads = 1;
+	int maxThreads = 8;
+
+	int defaultScreenWidth = 12800;
+	int defaultScreenHeight = 7200;
+
+	SSEFloat sseOne = _mm_set1_ps(1.0f);
+
+	int bytesInBitmapHeader = 54;
+
+	RTSphere spheres[10];
+	unsigned int numSpheres;
+
+	RTLight lights[10];
+	unsigned int numLights;
+
+	void render(AJRGB* pixelData, int screenWidth, int screenHeight, int threadID, int numThreads);
+	inline SSEFloat getNearestObstruction(Ray& rays);
+	void raytrace(SSERGB& colour, Ray& rays, int iteration, int w, int h);
+	void raytraceNonSSE(AJRGB &p, Ray &ray);
+	void setupScene();
+	void startRender(AJRGB* pixelData, int width, int height, int numThreads);
+	void writeBitmap(AJRGB* pixelData, int screenWidth, int screenHeight, int threadCount);
+
+	#ifndef _WIN32
+	# include <ctime>
+	# include <sys/time.h>
+	#else
+	# include <windows.h>
+	#endif
+
+	class timer
+	{
+		LARGE_INTEGER start;
+		timer()
+		{
+			QueryPerformanceCounter(&start);
+		}
+
+		double End()
+		{
+			LARGE_INTEGER end, freq;
+			QueryPerformanceCounter(&end);
+			QueryPerformanceFrequency(&freq);
+			return static_cast<double>(end.QuadPart-start.QuadPart)/freq.QuadPart;
+		}
+
+		void output(double seconds)
+		{
+			std::cout << seconds * 1000 << "ms" << std::endl;
+		}
+	}
+
 
 	inline SSEFloat SetFromUInt(unsigned int x)
 	{
