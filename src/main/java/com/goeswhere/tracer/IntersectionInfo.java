@@ -1,14 +1,9 @@
 package com.goeswhere.tracer;
 
-class IntersectionInfo
+public class IntersectionInfo
 {
 
-	IntersectionInfo(const RTObject* objects, const AJRGB* c) : objectPtrs(objects), colours(c) { }
-
-	~IntersectionInfo()
-	{
-		std::cout << "1337\n";
-	} ;
+	IntersectionInfo(RtObject objects, AJRGB c) { objectPtrs = (objects); colours = (c); }
 
 	void SetDistances(__m128 d) { distance = d; }
 	void SetNormal(__m128 x, __m128 y, __m128 z) { normalX = x; normalY = y; normalZ = z; }
@@ -18,7 +13,7 @@ class IntersectionInfo
 	__m128 normalX;
 	__m128 normalY;
 	__m128 normalZ;
-	const RTObject* objectPtrs;
-	const AJRGB* colours;
+	RtObject objectPtrs;
+	AJRGB colours;
 
 }
