@@ -57,19 +57,11 @@ class CppTracer {
 	}
 
 
-	static SSEFloat SetFromUInt(int x)
+	private static SSEFloat SetFromUInt(int x)
 	{
 		__m128i V = _mm_set1_epi32( x );
-	    return new SSEFloat(V, 0);
+	    return new SSEFloat(V);
 	}
-
-	SSEFloat SetFromUIntPtr(int p)
-	{
-		__m128i V = _mm_loadu_si128( new __m128i(p) );
-	    return new SSEFloat(V, 0);
-	}
-
-
 
 	public static void main(String... origv) throws InterruptedException, IOException
 	{

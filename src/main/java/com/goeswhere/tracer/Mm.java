@@ -5,8 +5,12 @@ public class Mm {
 		return null;
 	}
 
-	static SSEFloat _mm_add_ps(SSEFloat extraX, SSEFloat positionX) {
-		return null;
+	static SSEFloat _mm_add_ps(SSEFloat a, SSEFloat b) {
+		return new SSEFloat(
+				a.get0() + b.get0(),
+				a.get1() + b.get1(),
+				a.get2() + b.get2(),
+				a.get3() + b.get3());
 	}
 
 	static SSEFloat _mm_cmpgt_ps(SSEFloat distance, SSEFloat zero2) {
