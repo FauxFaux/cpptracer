@@ -7,10 +7,10 @@ public class Mm {
 
 	static SSEFloat _mm_add_ps(SSEFloat a, SSEFloat b) {
 		return new SSEFloat(
-				a.get0() + b.get0(),
-				a.get1() + b.get1(),
-				a.get2() + b.get2(),
-				a.get3() + b.get3());
+				a.r0 + b.r0,
+				a.r1 + b.r1,
+				a.r2 + b.r2,
+				a.r3 + b.r3);
 	}
 
 	static SSEFloat _mm_cmpgt_ps(SSEFloat distance, SSEFloat zero2) {
@@ -23,10 +23,10 @@ public class Mm {
 
 	static SSEFloat _mm_sub_ps(SSEFloat a, SSEFloat b) {
 		return new SSEFloat(
-				a.get0() - b.get0(),
-				a.get1() - b.get1(),
-				a.get2() - b.get2(),
-				a.get3() + b.get3());
+				a.r0 - b.r0,
+				a.r1 - b.r1,
+				a.r2 - b.r2,
+				a.r3 + b.r3);
 	}
 
 	static SSEFloat _mm_set1_ps(float power) {
@@ -39,18 +39,22 @@ public class Mm {
 
 	static SSEFloat _mm_mul_ps(SSEFloat a, SSEFloat b) {
 		return new SSEFloat(
-				a.get0() * b.get0(),
-				a.get1() * b.get1(),
-				a.get2() * b.get2(),
-				a.get3() * b.get3());
+				a.r0 * b.r0,
+				a.r1 * b.r1,
+				a.r2 * b.r2,
+				a.r3 * b.r3);
 	}
 
 	static SSEFloat _mm_andnot_ps(SSEFloat control, SSEFloat v1) {
 		throw new UnsupportedOperationException();
 	}
 
-	static SSEFloat _mm_cmpeq_ps(SSEFloat sseNearest, SSEFloat sseSI) {
-		throw new UnsupportedOperationException();
+	static SSEFloat _mm_cmpeq_ps(SSEFloat a, SSEFloat b) {
+		return new SSEFloat(
+				(a.r0 == b.r0) ? 0xffffffff : 0x0,
+				(a.r1 == b.r1) ? 0xffffffff : 0x0,
+				(a.r2 == b.r2) ? 0xffffffff : 0x0,
+				(a.r3 == b.r3) ? 0xffffffff : 0x0);
 	}
 
 	static SSEFloat _mm_cmpge_ps(SSEFloat d, SSEFloat _mm_setzero_ps) {
@@ -83,10 +87,10 @@ public class Mm {
 
 	static SSEFloat _mm_rsqrt_ps(SSEFloat a) {
 		return new SSEFloat(
-				V3.InvSqrt(a.get0()),
-				V3.InvSqrt(a.get1()),
-				V3.InvSqrt(a.get2()),
-				V3.InvSqrt(a.get3()));
+				V3.InvSqrt(a.r0),
+				V3.InvSqrt(a.r1),
+				V3.InvSqrt(a.r2),
+				V3.InvSqrt(a.r3));
 	}
 
 	static void _mm_store_ps(int[] nearest, SSEFloat sseNearest) {

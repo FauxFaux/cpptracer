@@ -2,7 +2,7 @@ package com.goeswhere.tracer;
 
 public class SSEFloat {
 
-	private float r0, r1, r2, r3;
+	float r0, r1, r2, r3;
 
 	public SSEFloat(__m128i v) {
 		r0 = v.r0;
@@ -20,21 +20,5 @@ public class SSEFloat {
 		this.r1 = r1;
 		this.r2 = r2;
 		this.r3 = r3;
-	}
-
-	public float get0() {
-		return r0;
-	}
-
-	public float get1() {
-		return r1;
-	}
-
-	public float get2() {
-		return r2;
-	}
-
-	public float get3() {
-		return r3;
 	}
 }
