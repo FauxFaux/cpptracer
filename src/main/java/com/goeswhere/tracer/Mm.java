@@ -41,7 +41,7 @@ public class Mm {
 		return null;
 	}
 
-	SSEFloat _mm_cmpge_ps(SSEFloat d, SSEFloat _mm_setzero_ps) {
+	static SSEFloat _mm_cmpge_ps(SSEFloat d, SSEFloat _mm_setzero_ps) {
 		return null;
 	}
 
@@ -49,7 +49,7 @@ public class Mm {
 		return null;
 	}
 
-	SSEFloat _mm_cmpneq_ps(SSEFloat positionX, SSEFloat miss2) {
+	static SSEFloat _mm_cmpneq_ps(SSEFloat positionX, SSEFloat miss2) {
 		return null;
 	}
 
@@ -63,5 +63,36 @@ public class Mm {
 
 	static SSEFloat _mm_setr_ps(int i, int j, int k, int l) {
 		return null;
+	}
+
+	static SSEFloat _mm_min_ps(SSEFloat red, SSEFloat twoFiftyFive) {
+		return null;
+	}
+
+	static SSEFloat _mm_rsqrt_ps(SSEFloat _mm_add_ps) {
+		return null;
+	}
+
+	static void _mm_store_ps(int[] nearest, SSEFloat sseNearest) {
+	}
+
+	static SSEFloat _mm_set_ps1(float maxValue) {
+		return null;
+	}
+
+	static SSEFloat _mm_sqrt_ps(SSEFloat _mm_add_ps) {
+		return null;
+	}
+
+	static SSEFloat _mm_div_ps(SSEFloat one, SSEFloat a) {
+		return null;
+	}
+
+	static SSEFloat _mm_or_ps(SSEFloat vTemp1, SSEFloat vTemp2) {
+		return null;
+	}
+
+	static int _mm_movemask_ps(SSEFloat mask) {
+		return 0;
 	}
 }

@@ -4,6 +4,7 @@ import static com.goeswhere.tracer.Mm._mm_and_ps;
 import static com.goeswhere.tracer.Stdafx.AnyComponentGreaterThanZero;
 import static com.goeswhere.tracer.Stdafx.Select;
 import static com.goeswhere.tracer.Mm.*;
+import static com.goeswhere.tracer.V3.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -56,7 +57,7 @@ class CppTracer {
 	}
 
 
-	SSEFloat SetFromUInt(int x)
+	static SSEFloat SetFromUInt(int x)
 	{
 		__m128i V = _mm_set1_epi32( x );
 	    return new SSEFloat(V, 0);
@@ -245,7 +246,7 @@ class CppTracer {
 		SSEFloat halfY = _mm_set1_ps((height - 1) / 2);
 
 		// A packet of four rays used for the SSE version.
-		Ray rayPacket;
+		Ray rayPacket = new Ray();
 
 		SSEFloat a = _mm_setr_ps(0, 1, 2, 3);
 		SSEFloat twoFiftyFive = _mm_set1_ps(255.0f);
@@ -297,6 +298,11 @@ class CppTracer {
 				}
 			}
 		}
+	}
+
+
+	private static int[] asFloatArray(SSEFloat red) {
+		return null;
 	}
 
 
@@ -456,7 +462,7 @@ class CppTracer {
 
 				if(AnyComponentGreaterThanZero(dotProduct))
 				{
-					Ray obstructionPacket;
+					Ray obstructionPacket = new Ray();
 					obstructionPacket.directionX = lightDirX;
 					obstructionPacket.directionY = lightDirY;
 					obstructionPacket.directionZ = lightDirZ;
@@ -512,7 +518,7 @@ class CppTracer {
 						// If this ray is hitting this sphere, and it's dot product > 0
 						if(nearest[r] == sphereIndex && asFloatArray(specDP)[r] > 0)
 						{
-							float specular = pow(asFloatArray(specDP)[r], 10) * sphere.GetSpecular();
+							float specular = (float) (Math.pow(asFloatArray(specDP)[r], 10) * sphere.GetSpecular());
 
 							//SSEFloat sseSpecular
 							asFloatArray(colour.red)[r] += specular;

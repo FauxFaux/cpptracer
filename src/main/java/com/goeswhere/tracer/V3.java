@@ -1,6 +1,16 @@
 package com.goeswhere.tracer;
 
-class V3Impl extends V3 {
+import static com.goeswhere.tracer.Mm.*;
+
+class V3
+{
+	V3() { this(0, 0, 0); }
+	V3(float _x, float _y, float _z) { x = (_x); y = (_y); z = (_z); }
+
+	float x;
+	float y;
+	float z;
+
 	void Add(V3 a, V3 b, V3 out)
 	{
 		out.x = a.x + b.x;
@@ -13,13 +23,13 @@ class V3Impl extends V3 {
 		return a.x * b.x + a.y * b.y + a.z * b.z;
 	}
 
-	SSEFloat DotSSE(SSEFloat ax, SSEFloat ay, SSEFloat az,
+	static SSEFloat DotSSE(SSEFloat ax, SSEFloat ay, SSEFloat az,
 				  SSEFloat bx, SSEFloat by, SSEFloat bz)
 	{
 		return _mm_add_ps(_mm_add_ps(_mm_mul_ps(ax, bx), _mm_mul_ps(ay, by)), _mm_mul_ps(az, bz));
 	}
 
-	SSEFloat LengthSSE(SSEFloat ax, SSEFloat ay, SSEFloat az)
+	static SSEFloat LengthSSE(SSEFloat ax, SSEFloat ay, SSEFloat az)
 	{
 		return _mm_sqrt_ps(_mm_add_ps(_mm_add_ps(_mm_mul_ps(ax, ax), _mm_mul_ps(ay, ay)), _mm_mul_ps(az, az)));
 	}
@@ -38,7 +48,7 @@ class V3Impl extends V3 {
 		xyz[2] = _mm_mul_ps(xyzc[2], xyzc[3]);
 	}
 
-	void NormalizeSSE(SSEFloat x, SSEFloat y, SSEFloat z)
+	static void NormalizeSSE(SSEFloat x, SSEFloat y, SSEFloat z)
 	{
 		SSEFloat oneOverLength = _mm_rsqrt_ps(_mm_add_ps(_mm_add_ps(_mm_mul_ps(x, x), _mm_mul_ps(y, y)), _mm_mul_ps(z, z)));
 
@@ -57,7 +67,7 @@ class V3Impl extends V3 {
 	}
 
 	// The formula for reflecting a vector in a normal.
-	void ReflectSSE(SSEFloat rayDirX, SSEFloat rayDirY, SSEFloat rayDirZ,
+	static void ReflectSSE(SSEFloat rayDirX, SSEFloat rayDirY, SSEFloat rayDirZ,
 					SSEFloat normalX, SSEFloat normalY, SSEFloat normalZ,
 					SSEFloat reflectedX, SSEFloat reflectedY, SSEFloat reflectedZ)
 	{

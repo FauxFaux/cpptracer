@@ -1,5 +1,7 @@
 package com.goeswhere.tracer;
 
+import static com.goeswhere.tracer.Mm.*;
+
 class AJRGB
 {
 	AJRGB() { this(0,0,0); }
