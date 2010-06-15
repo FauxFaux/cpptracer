@@ -115,9 +115,13 @@ class CppTracer {
 
 		// Render the image
 		AJRGB[] pixelData = new AJRGB[width * height];
+		for (int i = 0; i < pixelData.length; ++i)
+			pixelData[i] = new AJRGB();
 
 		double lowest = Double.MAX_VALUE;
 		int lowestThreads = 0;
+
+		render(pixelData, width, height, 0, 1);
 
 		for (int i=1; i<=height; ++i)
 			if (height%i == 0)
@@ -220,9 +224,17 @@ class CppTracer {
 
 		ExecutorService threads = Executors.newFixedThreadPool(numThreads);
 
-		for(int t = 0; t < numThreads; ++t) {
+		for (int t = 0; t < numThreads; ++t) {
 			final int q = t;
-			threads.submit(new Runnable() { @Override public void run() { render(pixelData, width, height, q, numThreads); } });
+			threads.submit(new Runnable() {
+				@Override public void run() {
+					try {
+						render(pixelData, width, height, q, numThreads);
+					} catch (Throwable t) {
+						t.printStackTrace();
+					}
+				}
+			});
 		}
 
 		threads.shutdown();
