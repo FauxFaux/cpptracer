@@ -42,6 +42,13 @@ public class SSEFloat {
 		throw new IllegalArgumentException();
 	}
 
+	void set(SSEFloat v) {
+		r0 = v.r0;
+		r1 = v.r1;
+		r2 = v.r2;
+		r3 = v.r3;
+	}
+
 	@Override public String toString() {
 		return r0 + "/" + r1 + "/" + r2 + "/" + r3;
 	}

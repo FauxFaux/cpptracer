@@ -548,7 +548,7 @@ class CppTracer {
 
 	static SSEFloat getNearestObstruction(Ray rays)
 	{
-		SSEFloat nearestObstruction = _mm_set1_ps(0xffffffff);
+		SSEFloat nearestObstruction = _mm_set1_ps(Float.MAX_VALUE);
 		SSEFloat zero = _mm_setzero_ps();
 
 		for(int s = 0; s < numSpheres; s++)
@@ -572,7 +572,7 @@ class CppTracer {
 			for (int x = 0; x < w; ++x)
 				image.setRGB(x, y, pixelData[x + y * w].toRgb());
 
-		ImageIO.write(image, "bmp", new File("ohnoes" + tc + ".bmp"));
+		ImageIO.write(image, "png", new File("ohnoes" + tc + ".png"));
 	}
 }
 

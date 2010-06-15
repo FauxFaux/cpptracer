@@ -71,6 +71,8 @@ public class Mm {
 	}
 
 	private static int f2i(float r0) {
+		if (Float.isNaN(r0))
+			return 0xffffffff;
 		return Float.floatToIntBits(r0);
 	}
 
@@ -131,10 +133,16 @@ public class Mm {
 	}
 
 	static void _mm_store_ps(int[] p, SSEFloat a) {
-		p[0] = f2i(a.r0);
-		p[1] = f2i(a.r1);
-		p[2] = f2i(a.r2);
-		p[3] = f2i(a.r3);
+		p[0] = nanIsLots(a.r0);
+		p[1] = nanIsLots(a.r1);
+		p[2] = nanIsLots(a.r2);
+		p[3] = nanIsLots(a.r3);
+	}
+
+	private static int nanIsLots(float r3) {
+		if (Float.isNaN(r3))
+			return 0xffffffff;
+		return (int) r3;
 	}
 
 	static SSEFloat _mm_set_ps1(float maxValue) {

@@ -57,9 +57,9 @@ class V3
 	{
 		SSEFloat oneOverLength = _mm_rsqrt_ps(_mm_add_ps(_mm_add_ps(_mm_mul_ps(x, x), _mm_mul_ps(y, y)), _mm_mul_ps(z, z)));
 
-		x = _mm_mul_ps(x, oneOverLength);
-		y = _mm_mul_ps(y, oneOverLength);
-		z = _mm_mul_ps(z, oneOverLength);
+		x.set(_mm_mul_ps(x, oneOverLength));
+		y.set(_mm_mul_ps(y, oneOverLength));
+		z.set(_mm_mul_ps(z, oneOverLength));
 	}
 
 	void Normalize(V3 out)
@@ -76,16 +76,16 @@ class V3
 					SSEFloat normalX, SSEFloat normalY, SSEFloat normalZ,
 					SSEFloat reflectedX, SSEFloat reflectedY, SSEFloat reflectedZ)
 	{
-		reflectedX = rayDirX;
-		reflectedY = rayDirY;
-		reflectedZ = rayDirZ;
+		reflectedX.set(rayDirX);
+		reflectedY.set(rayDirY);
+		reflectedZ.set(rayDirZ);
 
 		SSEFloat numByTwo =
 			_mm_mul_ps(_mm_add_ps(_mm_add_ps(_mm_mul_ps(rayDirX, normalX), _mm_mul_ps(rayDirY, normalY)), _mm_mul_ps(rayDirZ, normalZ)), _mm_set_ps1(2));
 
-		reflectedX = _mm_sub_ps(reflectedX, _mm_mul_ps(numByTwo, normalX));
-		reflectedY = _mm_sub_ps(reflectedY, _mm_mul_ps(numByTwo, normalY));
-		reflectedZ = _mm_sub_ps(reflectedZ, _mm_mul_ps(numByTwo, normalZ));
+		reflectedX.set(_mm_sub_ps(reflectedX, _mm_mul_ps(numByTwo, normalX)));
+		reflectedY.set(_mm_sub_ps(reflectedY, _mm_mul_ps(numByTwo, normalY)));
+		reflectedZ.set(_mm_sub_ps(reflectedZ, _mm_mul_ps(numByTwo, normalZ)));
 	}
 
 	void Subtract(V3 a, V3 b, V3 out)
