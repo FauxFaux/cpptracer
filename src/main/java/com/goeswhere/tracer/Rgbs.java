@@ -17,6 +17,10 @@ class AJRGB
 	public int toRgb() {
 		return (red << 16) + (green << 8) + blue;
 	}
+
+	@Override public String toString() {
+		return red + "-" + green + "-" + blue;
+	}
 }
 
 class SSERGB

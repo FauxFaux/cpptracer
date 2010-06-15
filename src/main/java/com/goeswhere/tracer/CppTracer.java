@@ -296,19 +296,13 @@ class CppTracer {
 
 				for(int i = 0; i < 4; i++)
 				{
-					pixelData[i + off].red = asFloatArray(colourPacket.red)[i];
-					pixelData[i + off].green = asFloatArray(colourPacket.green)[i];
-					pixelData[i + off].blue = asFloatArray(colourPacket.blue)[i];
+					pixelData[i + off].red = (int) colourPacket.red.r(i);
+					pixelData[i + off].green = (int) colourPacket.green.r(i);
+					pixelData[i + off].blue = (int) colourPacket.blue.r(i);
 				}
 			}
 		}
 	}
-
-
-	private static int[] asFloatArray(SSEFloat red) {
-		return null;
-	}
-
 
 	static SSEFloat zero = _mm_setzero_ps();
 	static SSEFloat trues = _mm_cmpeq_ps(zero, zero);
@@ -520,14 +514,14 @@ class CppTracer {
 					for(int r = 0; r < 4; r++)
 					{
 						// If this ray is hitting this sphere, and it's dot product > 0
-						if(nearest[r] == sphereIndex && asFloatArray(specDP)[r] > 0)
+						if(nearest[r] == sphereIndex && specDP.r(r) > 0)
 						{
-							float specular = (float) (Math.pow(asFloatArray(specDP)[r], 10) * sphere.GetSpecular());
+							float specular = (float) (Math.pow(specDP.r(r), 10) * sphere.GetSpecular());
 
 							//SSEFloat sseSpecular
-							asFloatArray(colour.red)[r] += specular;
-							asFloatArray(colour.green)[r] += specular;
-							asFloatArray(colour.blue)[r] += specular;
+							colour.red.plusequal(r, specular);
+							colour.green.plusequal(r, specular);
+							colour.blue.plusequal(r, specular);
 						}
 					}
 				}

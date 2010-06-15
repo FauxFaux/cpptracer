@@ -21,4 +21,24 @@ public class SSEFloat {
 		this.r2 = r2;
 		this.r3 = r3;
 	}
+
+	public float r(int r) {
+		switch (r) {
+		case 0: return r0;
+		case 1: return r1;
+		case 2: return r2;
+		case 3: return r3;
+		}
+		throw new IllegalArgumentException();
+	}
+
+	public void plusequal(int r, float f) {
+		switch (r) {
+		case 0: r0 += f; return;
+		case 1: r1 += f; return;
+		case 2: r2 += f; return;
+		case 3: r3 += f; return;
+		}
+		throw new IllegalArgumentException();
+	}
 }
