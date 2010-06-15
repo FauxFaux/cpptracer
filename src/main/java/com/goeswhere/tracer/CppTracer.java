@@ -144,6 +144,7 @@ class CppTracer {
 			printf("[height] = Height of rendered image in pixels. Default = 7200\n");
 			printf("[runCount] = Number of times to run each render at each thread count, lowest time is chosen. Has the effect of smoothing out the curve / ignoring sporadic CPU load. Default = 1\n");
 			printf("[imageCount] = Writes out the rendered BMPs to disk for thread counts <= imageCount. eg '3' will render out images for threadCount 1, 2, 3. Default = 0\n");
+			printf("[startThread] = Start with N threads. Default = 1\n");
 			return;
 		}
 
@@ -164,6 +165,10 @@ class CppTracer {
 		if(argc > 4)
 			writeImagesUpTo = atoi(argv[4]);
 
+		int startThread = 1;
+		if(argc > 5)
+			startThread = atoi(argv[5]);
+
 		// If no resolution specified, use defaults.
 		if(width == 0 || height == 0)
 		{
@@ -179,7 +184,7 @@ class CppTracer {
 		double lowest = Double.MAX_VALUE;
 		int lowestThreads = 0;
 
-		for (int i=1; i<=height; ++i)
+		for (int i=startThread; i<=height; ++i)
 			if (height%i == 0)
 			{
 				Arrays.fill(pixelData, (byte)0);
