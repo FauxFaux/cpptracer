@@ -9,4 +9,3 @@ class V3
 	float y;
 	float z;
 }
-

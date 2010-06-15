@@ -1,5 +1,6 @@
 package com.goeswhere.tracer;
 
+import static com.goeswhere.tracer.Mm.*;
 import static com.goeswhere.tracer.Stdafx.Select;
 
 class RtSphere {

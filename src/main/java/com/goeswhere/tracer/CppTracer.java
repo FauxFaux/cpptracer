@@ -1,10 +1,12 @@
 package com.goeswhere.tracer;
 
+import static com.goeswhere.tracer.Mm._mm_and_ps;
 import static com.goeswhere.tracer.Stdafx.AnyComponentGreaterThanZero;
 import static com.goeswhere.tracer.Stdafx.Select;
-
+import static com.goeswhere.tracer.Mm.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -13,16 +15,16 @@ import javax.imageio.ImageIO;
 
 class CppTracer {
 
-	float EPSILON = 0.001f;
+	static float EPSILON = 0.001f;
 	static float defaultViewportWidth = 0.1f;
-	float defaultNearClip = 0.1f;
+	static float defaultNearClip = 0.1f;
 	int defaultThreads = 1;
 	int maxThreads = 8;
 
 	static int defaultScreenWidth = 12800;
 	static int defaultScreenHeight = 7200;
 
-	SSEFloat sseOne = _mm_set1_ps(1.0f);
+	static SSEFloat sseOne = _mm_set1_ps(1.0f);
 
 	int bytesInBitmapHeader = 54;
 
@@ -32,7 +34,7 @@ class CppTracer {
 	static RtLight[] lights = new RtLight[10];
 	static int numLights;
 
-	class timer
+	static class timer
 	{
 		long start;
 		timer()
@@ -68,9 +70,7 @@ class CppTracer {
 
 
 
-
-
-	public static void main(String... origv)
+	public static void main(String... origv) throws InterruptedException
 	{
 		final int argc = origv.length + 1;
 		final String[] argv = new String[argc];
@@ -128,7 +128,7 @@ class CppTracer {
 
 				for(int r = 0; r < numRuns; r++)
 				{
-					timer t;
+					timer t = new timer();
 					startRender(pixelData, width, height, i);
 					double time = t.End();
 
@@ -209,16 +209,19 @@ class CppTracer {
 		// End of scene data.
 	}
 
-	static void startRender(final AJRGB[] pixelData, final int width, final int height, final int numThreads)
+	static void startRender(final AJRGB[] pixelData, final int width, final int height, int numThreadsp) throws InterruptedException
 	{
-		if(numThreads < 1)
+		final int numThreads;
+		if(numThreadsp < 1)
 			numThreads = 1;
+		else
+			numThreads = numThreadsp;
 
 		ExecutorService threads = Executors.newFixedThreadPool(numThreads);
 
-		for(final int t = 0; t < numThreads; ++t) {
+		for(int t = 0; t < numThreads; ++t) {
 			final int q = t;
-			threads.submit(new Runnable() { public void run() { render(pixelData, width, height, q, numThreads); } });
+			threads.submit(new Runnable() { @Override public void run() { render(pixelData, width, height, q, numThreads); } });
 		}
 
 		threads.shutdown();
@@ -297,11 +300,11 @@ class CppTracer {
 	}
 
 
-	SSEFloat zero = _mm_setzero_ps();
-	SSEFloat trues = _mm_cmpeq_ps(zero, zero);
-	SSEFloat miss = _mm_set1_ps(0xFFFFFFFF);
+	static SSEFloat zero = _mm_setzero_ps();
+	static SSEFloat trues = _mm_cmpeq_ps(zero, zero);
+	static SSEFloat miss = _mm_set1_ps(0xFFFFFFFF);
 
-	void raytrace(SSERGB colour, Ray rays, int iteration, int w, int h)
+	static void raytrace(SSERGB colour, Ray rays, int iteration, int w, int h)
 	{
 		if(iteration > 10)
 			return;
@@ -341,7 +344,7 @@ class CppTracer {
 		{
 			if(nearest[n] != 0xFFFFFFFF)
 			{
-				bool alreadyIn = false;
+				boolean alreadyIn = false;
 
 				for(int s = 0; s < n; s++)
 					if(spheresHit[s] == nearest[n])
@@ -383,7 +386,7 @@ class CppTracer {
 			// light onto an object for both diffuse and specular lighting.
 			for (int i = 0; i < numLights; i++)
 			{
-				RTLight light = lights[i];
+				RtLight light = lights[i];
 
 				// The i'th light's position.
 				SSEFloat lightPosX = _mm_set_ps1(light.position.x);
@@ -522,7 +525,7 @@ class CppTracer {
 		}
 	}
 
-	SSEFloat getNearestObstruction(Ray rays)
+	static SSEFloat getNearestObstruction(Ray rays)
 	{
 		SSEFloat nearestObstruction = _mm_set1_ps(0xffffffff);
 		SSEFloat zero = _mm_setzero_ps();
@@ -541,7 +544,7 @@ class CppTracer {
 		return nearestObstruction;
 	}
 
-	static void writeBitmap(AJRGB[] pixelData, int w, int h, int tc)
+	static void writeBitmap(AJRGB[] pixelData, int w, int h, int tc) throws IOException
 	{
 		final BufferedImage image = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
 		for (int y = 0; y < h; ++y)

@@ -1,10 +1,12 @@
 package com.goeswhere.tracer;
 
+import static com.goeswhere.tracer.Mm.*;
+
 public class Stdafx {
 	public final static long XM_CRMASK_CR6TRUE = 0x00000080;
 	public final static long XM_CRMASK_CR6FALSE = 0x00000020;
 	static boolean XMComparisonAnyTrue(long CR) { return  (((CR) & XM_CRMASK_CR6FALSE) != XM_CRMASK_CR6FALSE); }
-	boolean XMComparisonAllTrue(long CR) { return  (((CR) & XM_CRMASK_CR6TRUE) == XM_CRMASK_CR6TRUE); }
+	static boolean XMComparisonAllTrue(long CR) { return  (((CR) & XM_CRMASK_CR6TRUE) == XM_CRMASK_CR6TRUE); }
 
 	static SSEFloat Select(SSEFloat v1, SSEFloat v2, SSEFloat control)
 	{
