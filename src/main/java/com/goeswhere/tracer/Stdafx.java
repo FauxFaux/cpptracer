@@ -1,6 +1,12 @@
 package com.goeswhere.tracer;
 
-import static com.goeswhere.tracer.Mm.*;
+import static com.goeswhere.tracer.Mm._mm_and_ps;
+import static com.goeswhere.tracer.Mm._mm_andnot_ps;
+import static com.goeswhere.tracer.Mm._mm_cmpge_ps;
+import static com.goeswhere.tracer.Mm._mm_cmpgt_ps;
+import static com.goeswhere.tracer.Mm._mm_movemask_ps;
+import static com.goeswhere.tracer.Mm._mm_or_ps;
+import static com.goeswhere.tracer.Mm._mm_setzero_ps;
 
 public class Stdafx {
 	public final static long XM_CRMASK_CR6TRUE = 0x00000080;

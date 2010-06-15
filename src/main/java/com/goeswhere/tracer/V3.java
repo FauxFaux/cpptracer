@@ -1,6 +1,11 @@
 package com.goeswhere.tracer;
 
-import static com.goeswhere.tracer.Mm.*;
+import static com.goeswhere.tracer.Mm._mm_add_ps;
+import static com.goeswhere.tracer.Mm._mm_mul_ps;
+import static com.goeswhere.tracer.Mm._mm_rsqrt_ps;
+import static com.goeswhere.tracer.Mm._mm_set_ps1;
+import static com.goeswhere.tracer.Mm._mm_sqrt_ps;
+import static com.goeswhere.tracer.Mm._mm_sub_ps;
 
 class V3
 {

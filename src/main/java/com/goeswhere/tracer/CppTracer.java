@@ -1,10 +1,27 @@
 package com.goeswhere.tracer;
 
+import static com.goeswhere.tracer.Mm._mm_add_ps;
 import static com.goeswhere.tracer.Mm._mm_and_ps;
+import static com.goeswhere.tracer.Mm._mm_cmpeq_ps;
+import static com.goeswhere.tracer.Mm._mm_cmpgt_ps;
+import static com.goeswhere.tracer.Mm._mm_cmplt_ps;
+import static com.goeswhere.tracer.Mm._mm_cmpneq_ps;
+import static com.goeswhere.tracer.Mm._mm_min_ps;
+import static com.goeswhere.tracer.Mm._mm_mul_ps;
+import static com.goeswhere.tracer.Mm._mm_set1_epi32;
+import static com.goeswhere.tracer.Mm._mm_set1_ps;
+import static com.goeswhere.tracer.Mm._mm_set_ps1;
+import static com.goeswhere.tracer.Mm._mm_setr_ps;
+import static com.goeswhere.tracer.Mm._mm_setzero_ps;
+import static com.goeswhere.tracer.Mm._mm_store_ps;
+import static com.goeswhere.tracer.Mm._mm_sub_ps;
 import static com.goeswhere.tracer.Stdafx.AnyComponentGreaterThanZero;
 import static com.goeswhere.tracer.Stdafx.Select;
-import static com.goeswhere.tracer.Mm.*;
-import static com.goeswhere.tracer.V3.*;
+import static com.goeswhere.tracer.V3.DotSSE;
+import static com.goeswhere.tracer.V3.LengthSSE;
+import static com.goeswhere.tracer.V3.NormalizeSSE;
+import static com.goeswhere.tracer.V3.ReflectSSE;
+
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;

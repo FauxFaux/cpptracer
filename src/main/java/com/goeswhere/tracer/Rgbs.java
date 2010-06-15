@@ -1,6 +1,6 @@
 package com.goeswhere.tracer;
 
-import static com.goeswhere.tracer.Mm.*;
+import static com.goeswhere.tracer.Mm._mm_set1_ps;
 
 class AJRGB
 {
