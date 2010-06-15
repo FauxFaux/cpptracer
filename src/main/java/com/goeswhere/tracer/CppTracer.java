@@ -25,6 +25,13 @@ import static com.goeswhere.tracer.V3.ReflectSSE;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -80,11 +87,54 @@ class CppTracer {
 	    return new SSEFloat(V);
 	}
 
+	static class MutableInt {
+		int i;
+		@Override public String toString() {
+			return String.valueOf(i);
+		}
+	}
+
 	public static void main(String... origv) throws InterruptedException, IOException
 	{
 		final int argc = origv.length + 1;
 		final String[] argv = new String[argc];
 		System.arraycopy(origv, 0, argv, 1, origv.length);
+
+		final Map<StackTraceElement, MutableInt> m = new HashMap<StackTraceElement, MutableInt>();
+
+		final Thread logger = new Thread() {
+			@Override public void run() {
+				while (true) {
+					try {
+						Thread.sleep(1000);
+						for (StackTraceElement[] e : Thread.getAllStackTraces().values()) {
+							if (null == e || 0 == e.length)
+								continue;
+
+							MutableInt i = m.get(e[0]);
+							if (null == i)
+								m.put(e[0], i = new MutableInt());
+							++i.i;
+						}
+						List<Entry<StackTraceElement, MutableInt>> entries
+							= new ArrayList<Entry<StackTraceElement, MutableInt>>(m.entrySet());
+
+						Collections.sort(entries, new Comparator<Entry<StackTraceElement, MutableInt>>() {
+							@Override public int compare(Entry<StackTraceElement, MutableInt> o1,
+									Entry<StackTraceElement, MutableInt> o2) {
+								return o2.getValue().i - o1.getValue().i;
+							}
+
+						});
+						System.out.println(entries.subList(0, Math.min(entries.size(), 20)));
+					} catch (InterruptedException e) {
+						throw new RuntimeException(e);
+					}
+				}
+			}
+		};
+		logger.setDaemon(true);
+		logger.start();
 
 		if(argc == 1)
 		{
