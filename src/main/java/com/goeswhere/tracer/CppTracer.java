@@ -424,7 +424,7 @@ class CppTracer {
 
 				if(reflectionFactor > 0)
 				{
-					SSEFloat reflectionX, reflectionY, reflectionZ;
+					SSEFloat reflectionX = new SSEFloat(), reflectionY = new SSEFloat(), reflectionZ = new SSEFloat();
 
 					ReflectSSE(rays.directionX, rays.directionY, rays.directionZ,
 								sphereNormalX, sphereNormalY, sphereNormalZ,
@@ -432,7 +432,7 @@ class CppTracer {
 
 					NormalizeSSE(reflectionX, reflectionY, reflectionZ);
 
-					Ray reflectedPacket;
+					Ray reflectedPacket = new Ray();
 
 					reflectedPacket.directionX = reflectionX;
 					reflectedPacket.directionY = reflectionY;
@@ -504,7 +504,7 @@ class CppTracer {
 
 					// Calculate the vector along which light will be reflected off the
 					// surface of the sphere and store it in reflectionX/Y/Z.
-					SSEFloat reflectionX, reflectionY, reflectionZ;
+					SSEFloat reflectionX = new SSEFloat(), reflectionY = new SSEFloat(), reflectionZ = new SSEFloat();
 					sphere.ReflectRayAtPoint(toLightVectorX, toLightVectorY, toLightVectorZ,
 												intPointX, intPointY, intPointZ,
 												reflectionX, reflectionY, reflectionZ);

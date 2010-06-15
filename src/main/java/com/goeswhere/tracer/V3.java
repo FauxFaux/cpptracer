@@ -43,9 +43,9 @@ class V3
 
 	void MultiplySSE(SSEFloat xyzc, SSEFloat xyz)
 	{
-		xyz[0] = _mm_mul_ps(xyzc[0], xyzc[3]);
-		xyz[1] = _mm_mul_ps(xyzc[1], xyzc[3]);
-		xyz[2] = _mm_mul_ps(xyzc[2], xyzc[3]);
+		xyz.set0(_mm_mul_ps(xyzc.get0(), xyzc.get3()));
+		xyz.set1(_mm_mul_ps(xyzc.get1(), xyzc.get3()));
+		xyz.set2(_mm_mul_ps(xyzc.get2(), xyzc.get3()));
 	}
 
 	static void NormalizeSSE(SSEFloat x, SSEFloat y, SSEFloat z)
