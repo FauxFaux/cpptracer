@@ -90,7 +90,7 @@ class V3
 		out.z = a.z - b.z;
 	}
 
-	float InvSqrt(float x)
+	static float InvSqrt(float x)
 	{
 		return (float) (1.0/Math.sqrt(x));
 	}
