@@ -26,6 +26,7 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -173,15 +174,7 @@ class CppTracer {
 		setupScene();
 
 		// Render the image
-		AJRGB[] pixelData = new AJRGB[width * height];
-		int j = 0;
-		for (int i = 0; i < pixelData.length; ++i) {
-			if (++j > 10000000) {
-				j = 0;
-				System.out.println(i * 100.0f / pixelData.length + "% allocated");
-			}
-			pixelData[i] = new AJRGB();
-		}
+		final byte[] pixelData = new byte[width * height * 3];
 
 		double lowest = Double.MAX_VALUE;
 		int lowestThreads = 0;
@@ -189,8 +182,7 @@ class CppTracer {
 		for (int i=1; i<=height; ++i)
 			if (height%i == 0)
 			{
-				for (AJRGB a : pixelData)
-					a.zero();
+				Arrays.fill(pixelData, (byte)0);
 
 				double iLowest = Double.MAX_VALUE;
 
@@ -277,7 +269,7 @@ class CppTracer {
 		// End of scene data.
 	}
 
-	static void startRender(final AJRGB[] pixelData, final int width, final int height, int numThreadsp) throws InterruptedException
+	static void startRender(final byte[] pixelData, final int width, final int height, int numThreadsp) throws InterruptedException
 	{
 		final int numThreads;
 		if(numThreadsp < 1)
@@ -305,7 +297,7 @@ class CppTracer {
 	}
 
 
-	static void render(AJRGB[] pixelData, int width, int height, int threadID, int numThreads)
+	static void render(byte[] pixelData, int width, int height, int threadID, int numThreads)
 	{
 		// Calculate the height of the viewport depending on its width and the aspect
 		// ratio of the image.
@@ -363,13 +355,12 @@ class CppTracer {
 				colourPacket.green =  _mm_min_ps(colourPacket.green, twoFiftyFive);
 				colourPacket.blue =  _mm_min_ps(colourPacket.blue, twoFiftyFive);
 
-				final int off = x + y * width;
-
 				for(int i = 0; i < 4; i++)
 				{
-					pixelData[i + off].red = (int) colourPacket.red.r(3 - i);
-					pixelData[i + off].green = (int) colourPacket.green.r(3 - i);
-					pixelData[i + off].blue = (int) colourPacket.blue.r(3 - i);
+					final int base = 3 * (i + x + y * width);
+					pixelData[base + 0] = (byte) (int) colourPacket.red.r(3 - i);
+					pixelData[base + 1] = (byte) (int) colourPacket.green.r(3 - i);
+					pixelData[base + 2] = (byte) (int) colourPacket.blue.r(3 - i);
 				}
 			}
 		}
@@ -619,12 +610,16 @@ class CppTracer {
 		return nearestObstruction;
 	}
 
-	static void writeBitmap(AJRGB[] pixelData, int w, int h, int tc) throws IOException
+	static void writeBitmap(byte[] pixelData, int w, int h, int tc) throws IOException
 	{
 		final BufferedImage image = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
-		for (int y = 0; y < h; ++y)
-			for (int x = 0; x < w; ++x)
-				image.setRGB(x, y, pixelData[x + y * w].toRgb());
+		for (int y = 0; y < h; ++y) {
+			System.out.println();
+			for (int x = 0; x < w; ++x) {
+				final int pix = 3 * (x + y * w);
+				image.setRGB(x, y, AJRGB.toRgb(pixelData, pix));
+			}
+		}
 
 		ImageIO.write(image, "png", new File("ohnoes" + tc + ".png"));
 	}
