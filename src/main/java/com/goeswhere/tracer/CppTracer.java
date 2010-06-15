@@ -313,9 +313,9 @@ class CppTracer {
 
 				for(int i = 0; i < 4; i++)
 				{
-					pixelData[i + off].red = (int) colourPacket.red.r(i);
-					pixelData[i + off].green = (int) colourPacket.green.r(i);
-					pixelData[i + off].blue = (int) colourPacket.blue.r(i);
+					pixelData[i + off].red = (int) colourPacket.red.r(3 - i);
+					pixelData[i + off].green = (int) colourPacket.green.r(3 - i);
+					pixelData[i + off].blue = (int) colourPacket.blue.r(3 - i);
 				}
 			}
 		}
