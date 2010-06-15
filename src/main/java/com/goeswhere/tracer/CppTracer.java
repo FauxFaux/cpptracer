@@ -70,7 +70,7 @@ class CppTracer {
 
 
 
-	public static void main(String... origv) throws InterruptedException
+	public static void main(String... origv) throws InterruptedException, IOException
 	{
 		final int argc = origv.length + 1;
 		final String[] argv = new String[argc];

@@ -5,7 +5,7 @@ public class Mm {
 		return null;
 	}
 
-	static SSEFloat _mm_add_ps(SSEFloat extraX, __m128 positionX) {
+	static SSEFloat _mm_add_ps(SSEFloat extraX, SSEFloat positionX) {
 		return null;
 	}
 
@@ -29,11 +29,7 @@ public class Mm {
 		return null;
 	}
 
-	static Object _mm_mul_ps(SSEFloat red, SSEFloat dotProduct) {
-		return null;
-	}
-
-	static SSEFloat _mm_mul_ps(__m128 directionY, SSEFloat mult) {
+	static SSEFloat _mm_mul_ps(SSEFloat red, SSEFloat dotProduct) {
 		return null;
 	}
 
@@ -53,7 +49,7 @@ public class Mm {
 		return null;
 	}
 
-	SSEFloat _mm_cmpneq_ps(__m128 positionX, SSEFloat miss2) {
+	SSEFloat _mm_cmpneq_ps(SSEFloat positionX, SSEFloat miss2) {
 		return null;
 	}
 
@@ -66,10 +62,6 @@ public class Mm {
 	}
 
 	static SSEFloat _mm_setr_ps(int i, int j, int k, int l) {
-		return null;
-	}
-
-	static SSEFloat _mm_cmpneq_ps(__m128 positionX, SSEFloat miss2) {
 		return null;
 	}
 }

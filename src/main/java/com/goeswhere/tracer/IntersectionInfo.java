@@ -5,14 +5,14 @@ public class IntersectionInfo
 
 	IntersectionInfo(RtObject objects, AJRGB c) { objectPtrs = (objects); colours = (c); }
 
-	void SetDistances(__m128 d) { distance = d; }
-	void SetNormal(__m128 x, __m128 y, __m128 z) { normalX = x; normalY = y; normalZ = z; }
+	void SetDistances(SSEFloat d) { distance = d; }
+	void SetNormal(SSEFloat x, SSEFloat y, SSEFloat z) { normalX = x; normalY = y; normalZ = z; }
 
 
-	__m128 distance;
-	__m128 normalX;
-	__m128 normalY;
-	__m128 normalZ;
+	SSEFloat distance;
+	SSEFloat normalX;
+	SSEFloat normalY;
+	SSEFloat normalZ;
 	RtObject objectPtrs;
 	AJRGB colours;
 
