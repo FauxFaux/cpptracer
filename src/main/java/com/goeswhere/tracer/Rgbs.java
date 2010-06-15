@@ -19,7 +19,7 @@ class AJRGB
 	}
 
 	@Override public String toString() {
-		return red + "-" + green + "-" + blue;
+		return red + "'" + green + "'" + blue;
 	}
 }
 
@@ -33,4 +33,8 @@ class SSERGB
 	}
 
 	SSEFloat red, green, blue;
+
+	@Override public String toString() {
+		return red + ":" + green + ":" + blue;
+	}
 }

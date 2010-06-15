@@ -17,20 +17,21 @@ public class Mm {
 				a.r3 + b.r3);
 	}
 
+	final static float ALL_BITS_FLOAT = i2f(0xffffffff);
 	static SSEFloat _mm_cmpgt_ps(SSEFloat a, SSEFloat b) {
 		return new SSEFloat(
-				(a.r0 > b.r0) ? 0xffffffff : 0x0,
-				(a.r1 > b.r1) ? 0xffffffff : 0x0,
-				(a.r2 > b.r2) ? 0xffffffff : 0x0,
-				(a.r3 > b.r3) ? 0xffffffff : 0x0);
+				(a.r0 > b.r0) ? ALL_BITS_FLOAT : 0x0,
+				(a.r1 > b.r1) ? ALL_BITS_FLOAT : 0x0,
+				(a.r2 > b.r2) ? ALL_BITS_FLOAT : 0x0,
+				(a.r3 > b.r3) ? ALL_BITS_FLOAT : 0x0);
 	}
 
 	static SSEFloat _mm_cmplt_ps(SSEFloat a, SSEFloat b) {
 		return new SSEFloat(
-				(a.r0 < b.r0) ? 0xffffffff : 0x0,
-				(a.r1 < b.r1) ? 0xffffffff : 0x0,
-				(a.r2 < b.r2) ? 0xffffffff : 0x0,
-				(a.r3 < b.r3) ? 0xffffffff : 0x0);
+				(a.r0 < b.r0) ? ALL_BITS_FLOAT : 0x0,
+				(a.r1 < b.r1) ? ALL_BITS_FLOAT : 0x0,
+				(a.r2 < b.r2) ? ALL_BITS_FLOAT : 0x0,
+				(a.r3 < b.r3) ? ALL_BITS_FLOAT : 0x0);
 	}
 
 	static SSEFloat _mm_sub_ps(SSEFloat a, SSEFloat b) {
@@ -75,18 +76,18 @@ public class Mm {
 
 	static SSEFloat _mm_cmpeq_ps(SSEFloat a, SSEFloat b) {
 		return new SSEFloat(
-				(a.r0 == b.r0) ? 0xffffffff : 0x0,
-				(a.r1 == b.r1) ? 0xffffffff : 0x0,
-				(a.r2 == b.r2) ? 0xffffffff : 0x0,
-				(a.r3 == b.r3) ? 0xffffffff : 0x0);
+				(a.r0 == b.r0) ? ALL_BITS_FLOAT : 0x0,
+				(a.r1 == b.r1) ? ALL_BITS_FLOAT : 0x0,
+				(a.r2 == b.r2) ? ALL_BITS_FLOAT : 0x0,
+				(a.r3 == b.r3) ? ALL_BITS_FLOAT : 0x0);
 	}
 
 	static SSEFloat _mm_cmpge_ps(SSEFloat a, SSEFloat b) {
 		return new SSEFloat(
-				(a.r0 >= b.r0) ? 0xffffffff : 0x0,
-				(a.r1 >= b.r1) ? 0xffffffff : 0x0,
-				(a.r2 >= b.r2) ? 0xffffffff : 0x0,
-				(a.r3 >= b.r3) ? 0xffffffff : 0x0);
+				(a.r0 >= b.r0) ? ALL_BITS_FLOAT : 0x0,
+				(a.r1 >= b.r1) ? ALL_BITS_FLOAT : 0x0,
+				(a.r2 >= b.r2) ? ALL_BITS_FLOAT : 0x0,
+				(a.r3 >= b.r3) ? ALL_BITS_FLOAT : 0x0);
 	}
 
 	static SSEFloat _mm_mul_ps(Object _mm_mul_ps, SSEFloat lightPower) {
@@ -95,10 +96,10 @@ public class Mm {
 
 	static SSEFloat _mm_cmpneq_ps(SSEFloat a, SSEFloat b) {
 		return new SSEFloat(
-				(a.r0 != b.r0) ? 0xffffffff : 0x0,
-				(a.r1 != b.r1) ? 0xffffffff : 0x0,
-				(a.r2 != b.r2) ? 0xffffffff : 0x0,
-				(a.r3 != b.r3) ? 0xffffffff : 0x0);
+				(a.r0 != b.r0) ? ALL_BITS_FLOAT : 0x0,
+				(a.r1 != b.r1) ? ALL_BITS_FLOAT : 0x0,
+				(a.r2 != b.r2) ? ALL_BITS_FLOAT : 0x0,
+				(a.r3 != b.r3) ? ALL_BITS_FLOAT : 0x0);
 	}
 
 	static __m128i _mm_set1_epi32(int x) {
@@ -130,10 +131,10 @@ public class Mm {
 	}
 
 	static void _mm_store_ps(int[] p, SSEFloat a) {
-		p[0] = (int) a.r0;
-		p[1] = (int) a.r1;
-		p[2] = (int) a.r2;
-		p[3] = (int) a.r3;
+		p[0] = f2i(a.r0);
+		p[1] = f2i(a.r1);
+		p[2] = f2i(a.r2);
+		p[3] = f2i(a.r3);
 	}
 
 	static SSEFloat _mm_set_ps1(float maxValue) {

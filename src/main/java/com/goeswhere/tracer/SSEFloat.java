@@ -41,4 +41,8 @@ public class SSEFloat {
 		}
 		throw new IllegalArgumentException();
 	}
+
+	@Override public String toString() {
+		return r0 + "/" + r1 + "/" + r2 + "/" + r3;
+	}
 }
