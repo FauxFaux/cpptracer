@@ -124,13 +124,17 @@ class CppTracer {
 
 		// Render the image
 		AJRGB[] pixelData = new AJRGB[width * height];
-		for (int i = 0; i < pixelData.length; ++i)
+		int j = 0;
+		for (int i = 0; i < pixelData.length; ++i) {
+			if (++j > 10000000) {
+				j = 0;
+				System.out.println(i * 100.0f / pixelData.length + "% allocated");
+			}
 			pixelData[i] = new AJRGB();
+		}
 
 		double lowest = Double.MAX_VALUE;
 		int lowestThreads = 0;
-
-		render(pixelData, width, height, 0, 1);
 
 		for (int i=1; i<=height; ++i)
 			if (height%i == 0)
