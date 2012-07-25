@@ -139,11 +139,10 @@ int main(int argc, char *argv[])
 	if(argc == 1)
 	{
 		printf(" - cppraytracer[.exe] [width] [height] [runCount] [imageCount]\n");
-		printf("[width] = Width of rendered image in pixels. Default = 12800\n");
-		printf("[height] = Height of rendered image in pixels. Default = 7200\n");
+		printf("[width] = Width of rendered image in pixels. Default = %i\n", defaultScreenWidth);
+		printf("[height] = Height of rendered image in pixels. Default = %i\n", defaultScreenHeight);
 		printf("[runCount] = Number of times to run each render at each thread count, lowest time is chosen. Has the effect of smoothing out the curve / ignoring sporadic CPU load. Default = 1\n");
 		printf("[imageCount] = Writes out the rendered BMPs to disk for thread counts <= imageCount. eg '3' will render out images for threadCount 1, 2, 3. Default = 0\n");
-		return 0;
 	}
 
 	int width = 0;
