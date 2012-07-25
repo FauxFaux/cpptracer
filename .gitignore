@@ -6,3 +6,6 @@ x64
 Debug
 Release
 cpptracer
+*.opensdf
+*.sdf
+ipch/
