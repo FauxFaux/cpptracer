@@ -41,7 +41,6 @@
 
 using namespace boost;
 
-using namespace std;
 const float EPSILON = 0.001f;
 const float defaultViewportWidth = 0.1f;
 const float defaultNearClip = 0.1f;
@@ -133,7 +132,10 @@ inline SSEFloat SetFromUIntPtr(unsigned int* p)
 
 
 int main(int argc, char *argv[])
-{	
+{
+	using std::setw;
+	using std::right;
+
 	if(argc == 1)
 	{
 		printf(" - cppraytracer[.exe] [width] [height] [runCount] [imageCount]\n");
@@ -198,7 +200,7 @@ int main(int argc, char *argv[])
 					iLowest = time;
 			}
 
-			cout << setw(4) << right << i << ": " << iLowest * 1000 << std::endl;
+			std::cout << setw(4) << right << i << ": " << iLowest * 1000 << std::endl;
 
 			if(i <= writeImagesUpTo)
 				writeBitmap(pixelData, width, height, i);
