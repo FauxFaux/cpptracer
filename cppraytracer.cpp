@@ -149,18 +149,24 @@ int main(int argc, char *argv[])
 	int height = 0;
 	int numRuns = 1;
 	int writeImagesUpTo = 0;
+	bool bench = false;
 
-	if(argc > 1)
-		width = atoi(argv[1]);
+	if (argc == 2 && argv[1][0] == 'b') {
+		bench = true;
+	} else {
 
-	if(argc > 2)
-		height = atoi(argv[2]);
+		if(argc > 1)
+			width = atoi(argv[1]);
 
-	if(argc > 3)
-		numRuns = atoi(argv[3]);
+		if(argc > 2)
+			height = atoi(argv[2]);
 
-	if(argc > 4)
-		writeImagesUpTo = atoi(argv[4]);
+		if(argc > 3)
+			numRuns = atoi(argv[3]);
+
+		if(argc > 4)
+			writeImagesUpTo = atoi(argv[4]);
+	}
 
 	// If no resolution specified, use defaults.
 	if(width == 0 || height == 0)
@@ -177,7 +183,17 @@ int main(int argc, char *argv[])
 	double lowest = std::numeric_limits<double>().max();
 	int lowestThreads = 0;
 
-	for (int i=1; i<=height; ++i)
+	int min_val;
+	int max_val;
+	if (bench) {
+		min_val = 8;
+		max_val = 8;
+	} else {
+		min_val = 1;
+		max_val = height;
+	}
+
+	for (int i=min_val; i<=max_val; ++i)
 		if (height%i == 0)
 		{
 			memset(pixelData, 0, sizeof(AJRGB) * width * height);
