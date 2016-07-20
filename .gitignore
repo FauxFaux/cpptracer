@@ -11,3 +11,4 @@ cpptracer
 ipch/
 out
 *.swp
+.idea
