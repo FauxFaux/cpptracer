@@ -9,3 +9,5 @@ cpptracer
 *.opensdf
 *.sdf
 ipch/
+out
+*.swp
