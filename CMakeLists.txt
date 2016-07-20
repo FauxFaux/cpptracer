@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 2.8)
 project(cpptracer)
 
+find_package(Threads)
+
 add_executable(cpptracer
         color.cpp
         cppraytracer.cpp
@@ -15,7 +17,9 @@ add_executable(cpptracer
         )
 
 target_link_libraries(cpptracer
-        boost_thread
-        boost_system
+        ${CMAKE_THREAD_LIBS_INIT}
         )
 
+target_compile_features(cpptracer PUBLIC
+        cxx_range_for
+        )

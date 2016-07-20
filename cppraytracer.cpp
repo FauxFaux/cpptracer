@@ -13,10 +13,8 @@
 #include <omp.h>
 #endif
 
-#include <boost/thread.hpp>
-#include <boost/bind.hpp>
+#include <thread>
 #include <boost/ptr_container/ptr_vector.hpp>
-#include <boost/foreach.hpp>
 
 #ifndef _WINDOWS
 # if defined(WIN32) || defined(_WIN32)
@@ -41,7 +39,8 @@
 # define ALIGN16 __declspec(align(16))
 #endif
 
-using namespace boost;
+using std::thread;
+using std::bind;
 
 const float EPSILON = 0.001f;
 const float defaultViewportWidth = 0.1f;
@@ -312,13 +311,13 @@ void startRender(AJRGB *pixelData, const int width, const int height, int numThr
 			render(pixelData, width, height, t * (height / numThreads), (height / numThreads));
 		}
 #else
-	ptr_vector<thread> threads;
+	boost::ptr_vector<thread> threads;
 
 	for (int t = 0; t < numThreads; ++t)
-		threads.push_back(new thread(bind(&render, pixelData, width, height, t, numThreads)));
+		threads.push_back(new thread(std::bind(&render, pixelData, width, height, t, numThreads)));
 
-	BOOST_FOREACH(thread &t, threads)
-					t.join();
+	for(std::thread &t : threads)
+		t.join();
 #endif
 }
 
