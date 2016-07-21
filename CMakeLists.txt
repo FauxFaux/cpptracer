@@ -4,13 +4,7 @@ project(cpptracer)
 find_package(Threads)
 
 add_executable(cpptracer
-        color.cpp
         cppraytracer.cpp
-        intersectioninfo.cpp
-        pixel.cpp
-        ray.cpp
-        rtlight.cpp
-        rtobject.cpp
         rtsphere.cpp
         stdafx.cpp
         v3.cpp

@@ -4,7 +4,6 @@
 //#define USEOPENMP
 
 #include "stdafx.h"
-#include "intersectioninfo.h"
 #include "pixel.h"
 #include "rtsphere.h"
 #include "rtlight.h"
