@@ -4,10 +4,9 @@ project(cpptracer)
 find_package(Threads)
 
 add_executable(cpptracer
-        cppraytracer.cpp
-        rtsphere.cpp
-        stdafx.cpp
-        v3.cpp
+        main.cpp
+        tracer.cpp
+        bitmap.cpp
         )
 
 target_link_libraries(cpptracer

@@ -1,25 +1,29 @@
-// A C++ Raytracer written by Adam Miles.
-
-// OpenMP doesn't support > 64 threads on my machine, and is thus cheating :p.
-//#define USEOPENMP
-
-#include "stdafx.h"
-#include "pixel.h"
-#include "rtsphere.h"
-#include "rtlight.h"
-
-#if defined(USEOPENMP)
-#include <omp.h>
-#endif
-
 #include <thread>
 #include <boost/ptr_container/ptr_vector.hpp>
 
-#ifndef _WINDOWS
-# if defined(WIN32) || defined(_WIN32)
-#  define _WINDOWS
-# endif
-#endif
+#include "objects.h"
+#include "tracer.h"
+
+using std::thread;
+using std::bind;
+
+
+const float EPSILON = 0.001f;
+const float defaultViewportWidth = 0.1f;
+const float defaultNearClip = 0.1f;
+
+RTSphere spheres[10];
+unsigned int numSpheres;
+
+RTLight lights[10];
+unsigned int numLights;
+
+const SSEFloat sseOne = _mm_set1_ps(1.0f);
+
+SSEFloat zero = _mm_setzero_ps();
+SSEFloat trues = _mm_cmpeq_ps(zero, zero);
+SSEFloat miss = _mm_set1_ps(0xFFFFFFFF);
+
 
 #ifdef _WINDOWS
 # define asFloatArray(x) ((x).m128_f32)
@@ -38,92 +42,139 @@
 # define ALIGN16 __declspec(align(16))
 #endif
 
-using std::thread;
-using std::bind;
+#define XM_CRMASK_CR6TRUE   0x00000080
+#define XM_CRMASK_CR6FALSE  0x00000020
+#define XMComparisonAnyTrue(CR)  (((CR) & XM_CRMASK_CR6FALSE) != XM_CRMASK_CR6FALSE)
+#define XMComparisonAllTrue(CR)  (((CR) & XM_CRMASK_CR6TRUE) == XM_CRMASK_CR6TRUE)
 
-const float EPSILON = 0.001f;
-const float defaultViewportWidth = 0.1f;
-const float defaultNearClip = 0.1f;
-const int defaultThreads = 1;
-const int maxThreads = 8;
-
-const int defaultScreenWidth = 12800;
-const int defaultScreenHeight = 7200;
-
-const SSEFloat sseOne = _mm_set1_ps(1.0f);
-
-const int bytesInBitmapHeader = 54;
-
-RTSphere spheres[10];
-unsigned int numSpheres;
-
-RTLight lights[10];
-unsigned int numLights;
-
-void render(AJRGB *pixelData, const int screenWidth, const int screenHeight, const int threadID, const int numThreads);
-
-inline SSEFloat getNearestObstruction(const Ray &rays);
-
-void raytrace(SSERGB &colour, const Ray &rays, const int iteration, const int w, const int h);
-
-void raytraceNonSSE(AJRGB &p, const Ray &ray);
-
-void setupScene();
-
-void startRender(AJRGB *pixelData, const int width, const int height, int numThreads);
-
-void writeBitmap(AJRGB *pixelData, const int screenWidth, const int screenHeight, const int threadCount);
-
-#ifndef _WIN32
-
-# include <ctime>
-# include <sys/time.h>
-
-#else
-# include <windows.h>
-#endif
-
-struct timer
+inline SSEFloat Select(SSEFloat v1, SSEFloat v2, SSEFloat control)
 {
-#ifndef _WIN32
-	double start;
+	SSEFloat vTemp1 = _mm_andnot_ps(control, v1);
+	SSEFloat vTemp2 = _mm_and_ps(v2, control);
+	return _mm_or_ps(vTemp1, vTemp2);
+}
 
-	timer()
+inline unsigned int MaskToUInt(SSEFloat mask)
+{
+	unsigned int CR = 0;
+	int iTest = _mm_movemask_ps(mask);
+	if (iTest==0xf)
 	{
-		timeval now;
-		gettimeofday(&now, 0);
-		start = now.tv_sec + (now.tv_usec / 1000000.0);
+		CR = XM_CRMASK_CR6TRUE;
+	}
+	else if (!iTest)
+	{
+		CR = XM_CRMASK_CR6FALSE;
 	}
 
-	double End()
-	{
-		timeval now;
-		gettimeofday(&now, 0);
-		double end = now.tv_sec + (now.tv_usec / 1000000.0);
-		return static_cast<double>(end - start);
-	}
+	return CR;
+}
 
-#else
-	LARGE_INTEGER start;
-	timer()
-	{
-		QueryPerformanceCounter(&start);
-	}
+inline bool AnyComponentGreaterThanZero(SSEFloat v1)
+{
+	SSEFloat mask = _mm_cmpgt_ps(v1,_mm_setzero_ps());
 
-	double End()
-	{
-		LARGE_INTEGER end, freq;
-		QueryPerformanceCounter(&end);
-		QueryPerformanceFrequency(&freq);
-		return static_cast<double>(end.QuadPart-start.QuadPart)/freq.QuadPart;
-	}
-#endif
+	return XMComparisonAnyTrue(MaskToUInt(mask));
+}
 
-	void output(double seconds)
-	{
-		std::cout << seconds * 1000 << "ms" << std::endl;
-	}
-};
+inline bool AllComponentGreaterEqualThanZero(SSEFloat v1)
+{
+	SSEFloat mask = _mm_cmpge_ps(v1,_mm_setzero_ps());
+
+	return XMComparisonAllTrue(MaskToUInt(mask));
+}
+
+
+void Add(const V3& a, const V3& b, V3& out)
+{
+	out.x = a.x + b.x;
+	out.y = a.y + b.y;
+	out.z = a.z + b.z;
+}
+
+float Dot(const V3& a, const V3& b)
+{
+	return a.x * b.x + a.y * b.y + a.z * b.z;
+}
+
+SSEFloat DotSSE(const SSEFloat &ax, const SSEFloat &ay, const SSEFloat &az,
+				const SSEFloat &bx, const SSEFloat &by, const SSEFloat &bz)
+{
+	return _mm_add_ps(_mm_add_ps(_mm_mul_ps(ax, bx), _mm_mul_ps(ay, by)), _mm_mul_ps(az, bz));
+}
+
+SSEFloat LengthSSE(const SSEFloat &ax, const SSEFloat &ay, const SSEFloat &az)
+{
+	return _mm_sqrt_ps(_mm_add_ps(_mm_add_ps(_mm_mul_ps(ax, ax), _mm_mul_ps(ay, ay)), _mm_mul_ps(az, az)));
+}
+
+// The infamous "fast inverse square root" from Quake 3 source and numerous
+// other articles.
+float InvSqrt(float x)
+{
+	float xhalf = 0.5*x;
+	int i = *(int*)&x;
+	i = 0x5f3759df - (i >> 1);
+	x = *(float*)&i;
+	x = x * (1.5 - xhalf * x * x);
+	return x;
+}
+
+void Multiply(const V3& a, const float& b, V3& out)
+{
+	out.x = a.x * b;
+	out.y = a.y * b;
+	out.z = a.z * b;
+}
+
+void MultiplySSE(const SSEFloat* xyzc, SSEFloat* xyz)
+{
+	xyz[0] = _mm_mul_ps(xyzc[0], xyzc[3]);
+	xyz[1] = _mm_mul_ps(xyzc[1], xyzc[3]);
+	xyz[2] = _mm_mul_ps(xyzc[2], xyzc[3]);
+}
+
+void NormalizeSSE(SSEFloat &x, SSEFloat &y, SSEFloat &z)
+{
+	SSEFloat oneOverLength = _mm_rsqrt_ps(_mm_add_ps(_mm_add_ps(_mm_mul_ps(x, x), _mm_mul_ps(y, y)), _mm_mul_ps(z, z)));
+
+	x = _mm_mul_ps(x, oneOverLength);
+	y = _mm_mul_ps(y, oneOverLength);
+	z = _mm_mul_ps(z, oneOverLength);
+}
+
+void Normalize(V3 &out)
+{
+	float oneOverLength = InvSqrt(out.x * out.x + out.y * out.y + out.z * out.z);
+
+	out.x *= oneOverLength;
+	out.y *= oneOverLength;
+	out.z *= oneOverLength;
+}
+
+// The formula for reflecting a vector in a normal.
+void ReflectSSE(const SSEFloat &rayDirX, const SSEFloat &rayDirY, const SSEFloat &rayDirZ,
+				const SSEFloat &normalX, const SSEFloat &normalY, const SSEFloat &normalZ,
+				SSEFloat &reflectedX, SSEFloat &reflectedY, SSEFloat &reflectedZ)
+{
+	reflectedX = rayDirX;
+	reflectedY = rayDirY;
+	reflectedZ = rayDirZ;
+
+	SSEFloat numByTwo =
+			_mm_mul_ps(_mm_add_ps(_mm_add_ps(_mm_mul_ps(rayDirX, normalX), _mm_mul_ps(rayDirY, normalY)), _mm_mul_ps(rayDirZ, normalZ)), _mm_set_ps1(2));
+
+	reflectedX = _mm_sub_ps(reflectedX, _mm_mul_ps(numByTwo, normalX));
+	reflectedY = _mm_sub_ps(reflectedY, _mm_mul_ps(numByTwo, normalY));
+	reflectedZ = _mm_sub_ps(reflectedZ, _mm_mul_ps(numByTwo, normalZ));
+}
+
+void Subtract(const V3& a, const V3& b, V3& out)
+{
+	out.x = a.x - b.x;
+	out.y = a.y - b.y;
+	out.z = a.z - b.z;
+}
 
 inline SSEFloat SetFromUInt(unsigned int x)
 {
@@ -135,110 +186,6 @@ inline SSEFloat SetFromUIntPtr(unsigned int *p)
 {
 	__m128i V = _mm_loadu_si128((const __m128i *) p);
 	return reinterpret_cast<__m128 *>(&V)[0];
-}
-
-
-int main(int argc, char *argv[])
-{
-	using std::setw;
-	using std::right;
-
-	if (argc == 1)
-	{
-		printf(" - cppraytracer[.exe] [width] [height] [runCount] [imageCount]\n");
-		printf("[width] = Width of rendered image in pixels. Default = %i\n", defaultScreenWidth);
-		printf("[height] = Height of rendered image in pixels. Default = %i\n", defaultScreenHeight);
-		printf("[runCount] = Number of times to run each render at each thread count, lowest time is chosen. Has the effect of smoothing out the curve / ignoring sporadic CPU load. Default = 1\n");
-		printf("[imageCount] = Writes out the rendered BMPs to disk for thread counts <= imageCount. eg '3' will render out images for threadCount 1, 2, 3. Default = 0\n");
-	}
-
-	int width = 0;
-	int height = 0;
-	int numRuns = 1;
-	int writeImagesUpTo = 0;
-	bool bench = false;
-
-	if (argc == 2 && argv[1][0] == 'b')
-	{
-		bench = true;
-	} else
-	{
-
-		if (argc > 1)
-			width = atoi(argv[1]);
-
-		if (argc > 2)
-			height = atoi(argv[2]);
-
-		if (argc > 3)
-			numRuns = atoi(argv[3]);
-
-		if (argc > 4)
-			writeImagesUpTo = atoi(argv[4]);
-	}
-
-	// If no resolution specified, use defaults.
-	if (width == 0 || height == 0)
-	{
-		width = defaultScreenWidth;
-		height = defaultScreenHeight;
-	}
-
-	setupScene();
-
-	// Render the image
-	AJRGB *pixelData = new AJRGB[width * height];
-
-	double lowest = std::numeric_limits<double>().max();
-	int lowestThreads = 0;
-
-	int min_val;
-	int max_val;
-	if (bench)
-	{
-		min_val = 8;
-		max_val = 8;
-	} else
-	{
-		min_val = 1;
-		max_val = height;
-	}
-
-	for (int i = min_val; i <= max_val; ++i)
-		if (height % i == 0)
-		{
-			memset(pixelData, 0, sizeof(AJRGB) * width * height);
-
-			double iLowest = std::numeric_limits<double>().max();
-
-			for (int r = 0; r < numRuns; r++)
-			{
-				timer t;
-				startRender(pixelData, width, height, i);
-				double time = t.End();
-
-				if (time < lowest)
-				{
-					lowest = time;
-					lowestThreads = i;
-				}
-				if (time < iLowest)
-					iLowest = time;
-			}
-
-			std::cout << setw(4) << right << i << ": " << iLowest * 1000 << std::endl;
-
-			if (i <= writeImagesUpTo)
-				writeBitmap(pixelData, width, height, i);
-		}
-
-	std::cout << setw(4) << right << "Interleaved version." << std::endl;
-	std::cout << setw(4) << right << "Lowest: " << lowest * 1000 << "ms at " << lowestThreads << " threads."
-			  << std::endl;
-
-	delete[] pixelData;
-
-	return 0;
 }
 
 void setupScene()
@@ -297,104 +244,25 @@ void setupScene()
 	// End of scene data.
 }
 
-void startRender(AJRGB *pixelData, const int width, const int height, int numThreads)
+SSEFloat getNearestObstruction(const Ray &rays)
 {
-	if (numThreads < 1)
-		numThreads = 1;
+	SSEFloat nearestObstruction = _mm_set1_ps(0xffffffff);
+	SSEFloat zero = _mm_setzero_ps();
 
-#if defined(USEOPENMP)
-	omp_set_num_threads(numThreads);
-#pragma omp parallel for
-		for(int t = 0; t < numThreads; ++t)
-		{
-			render(pixelData, width, height, t * (height / numThreads), (height / numThreads));
-		}
-#else
-	boost::ptr_vector<thread> threads;
-
-	for (int t = 0; t < numThreads; ++t)
-		threads.push_back(new thread(std::bind(&render, pixelData, width, height, t, numThreads)));
-
-	for(std::thread &t : threads)
-		t.join();
-#endif
-}
-
-
-void render(AJRGB *pixelData, const int width, const int height, const int threadID, const int numThreads)
-{
-	// Calculate the height of the viewport depending on its width and the aspect
-	// ratio of the image.
-	const float viewportWidth = defaultViewportWidth;
-	const float viewportHeight = viewportWidth / ((float) width / height);
-
-	// Calculate the width and height of a pixel, normally square.
-	SSEFloat pixelWidth = _mm_set1_ps(viewportWidth / width);
-	SSEFloat pixelHeight = _mm_set1_ps(viewportHeight / height);
-
-	// Constants used in calculating each ray's direction.
-	SSEFloat halfX = _mm_set1_ps((width - 1) / 2);
-	SSEFloat halfY = _mm_set1_ps((height - 1) / 2);
-
-	// A packet of four rays used for the SSE version.
-	Ray rayPacket;
-
-	SSEFloat a = _mm_setr_ps(0, 1, 2, 3);
-	SSEFloat twoFiftyFive = _mm_set1_ps(255.0f);
-
-	SSERGB colourPacket(0, 0, 0);
-
-	// Scanning across in rows from the top
-	for (unsigned int y = threadID; y < height; y += numThreads)
+	for (unsigned int s = 0; s < numSpheres; s++)
 	{
-		SSEFloat sseY = _mm_set1_ps(y);
+		RTSphere &sphere = spheres[s];
+		SSEFloat distance = sphere.IntersectTest(rays);
 
-		// Four pixels at a time.
-		for (unsigned int x = 0; x < width; x += 4)
-		{
-			SSEFloat sseX = _mm_set1_ps(x);
-
-			rayPacket.directionX = _mm_mul_ps(_mm_sub_ps(_mm_add_ps(sseX, a), halfX), pixelWidth);
-			rayPacket.directionY = _mm_sub_ps(_mm_setzero_ps(), _mm_mul_ps(_mm_sub_ps(sseY, halfY), pixelHeight));
-
-			rayPacket.directionZ = _mm_set1_ps(defaultNearClip);
-			rayPacket.positionX = _mm_setzero_ps();
-			rayPacket.positionY = _mm_setzero_ps();
-			rayPacket.positionZ = _mm_setzero_ps();
-
-			NormalizeSSE(rayPacket.directionX, rayPacket.directionY, rayPacket.directionZ);
-
-			colourPacket.red = _mm_setzero_ps();
-			colourPacket.green = _mm_setzero_ps();
-			colourPacket.blue = _mm_setzero_ps();
-
-			// Raytrace the packet of four rays
-			raytrace(colourPacket, rayPacket, 0, x, y);
-
-			colourPacket.red = _mm_mul_ps(colourPacket.red, twoFiftyFive);
-			colourPacket.green = _mm_mul_ps(colourPacket.green, twoFiftyFive);
-			colourPacket.blue = _mm_mul_ps(colourPacket.blue, twoFiftyFive);
-
-			colourPacket.red = _mm_min_ps(colourPacket.red, twoFiftyFive);
-			colourPacket.green = _mm_min_ps(colourPacket.green, twoFiftyFive);
-			colourPacket.blue = _mm_min_ps(colourPacket.blue, twoFiftyFive);
-
-			AJRGB *pixelPtr = pixelData + (x + y * width);
-
-			for (unsigned int i = 0; i < 4; i++)
-			{
-				pixelPtr[i].red = (uchar) asFloatArray(colourPacket.red)[i];
-				pixelPtr[i].green = (uchar) asFloatArray(colourPacket.green)[i];
-				pixelPtr[i].blue = (uchar) asFloatArray(colourPacket.blue)[i];
-			}
-		}
+		SSEFloat gtZeroMask = _mm_cmpgt_ps(distance, zero);
+		SSEFloat ltNearestObs = _mm_cmplt_ps(distance, nearestObstruction);
+		SSEFloat mask = _mm_and_ps(gtZeroMask, ltNearestObs);
+		nearestObstruction = Select(nearestObstruction, distance, mask);
 	}
+
+	return nearestObstruction;
 }
 
-
-SSEFloat zero = _mm_setzero_ps();
-SSEFloat trues = _mm_cmpeq_ps(zero, zero);
-SSEFloat miss = _mm_set1_ps(0xFFFFFFFF);
 
 void raytrace(SSERGB &colour, const Ray &rays, const int iteration, const int w, const int h)
 {
@@ -623,84 +491,175 @@ void raytrace(SSERGB &colour, const Ray &rays, const int iteration, const int w,
 	}
 }
 
-SSEFloat getNearestObstruction(const Ray &rays)
+void render(AJRGB *pixelData, const int width, const int height, const int threadID, const int numThreads)
 {
-	SSEFloat nearestObstruction = _mm_set1_ps(0xffffffff);
-	SSEFloat zero = _mm_setzero_ps();
+	// Calculate the height of the viewport depending on its width and the aspect
+	// ratio of the image.
+	const float viewportWidth = defaultViewportWidth;
+	const float viewportHeight = viewportWidth / ((float) width / height);
 
-	for (unsigned int s = 0; s < numSpheres; s++)
+	// Calculate the width and height of a pixel, normally square.
+	SSEFloat pixelWidth = _mm_set1_ps(viewportWidth / width);
+	SSEFloat pixelHeight = _mm_set1_ps(viewportHeight / height);
+
+	// Constants used in calculating each ray's direction.
+	SSEFloat halfX = _mm_set1_ps((width - 1) / 2);
+	SSEFloat halfY = _mm_set1_ps((height - 1) / 2);
+
+	// A packet of four rays used for the SSE version.
+	Ray rayPacket;
+
+	SSEFloat a = _mm_setr_ps(0, 1, 2, 3);
+	SSEFloat twoFiftyFive = _mm_set1_ps(255.0f);
+
+	SSERGB colourPacket(0, 0, 0);
+
+	// Scanning across in rows from the top
+	for (unsigned int y = threadID; y < height; y += numThreads)
 	{
-		RTSphere &sphere = spheres[s];
-		SSEFloat distance = sphere.IntersectTest(rays);
+		SSEFloat sseY = _mm_set1_ps(y);
 
-		SSEFloat gtZeroMask = _mm_cmpgt_ps(distance, zero);
-		SSEFloat ltNearestObs = _mm_cmplt_ps(distance, nearestObstruction);
-		SSEFloat mask = _mm_and_ps(gtZeroMask, ltNearestObs);
-		nearestObstruction = Select(nearestObstruction, distance, mask);
+		// Four pixels at a time.
+		for (unsigned int x = 0; x < width; x += 4)
+		{
+			SSEFloat sseX = _mm_set1_ps(x);
+
+			rayPacket.directionX = _mm_mul_ps(_mm_sub_ps(_mm_add_ps(sseX, a), halfX), pixelWidth);
+			rayPacket.directionY = _mm_sub_ps(_mm_setzero_ps(), _mm_mul_ps(_mm_sub_ps(sseY, halfY), pixelHeight));
+
+			rayPacket.directionZ = _mm_set1_ps(defaultNearClip);
+			rayPacket.positionX = _mm_setzero_ps();
+			rayPacket.positionY = _mm_setzero_ps();
+			rayPacket.positionZ = _mm_setzero_ps();
+
+			NormalizeSSE(rayPacket.directionX, rayPacket.directionY, rayPacket.directionZ);
+
+			colourPacket.red = _mm_setzero_ps();
+			colourPacket.green = _mm_setzero_ps();
+			colourPacket.blue = _mm_setzero_ps();
+
+			// Raytrace the packet of four rays
+			raytrace(colourPacket, rayPacket, 0, x, y);
+
+			colourPacket.red = _mm_mul_ps(colourPacket.red, twoFiftyFive);
+			colourPacket.green = _mm_mul_ps(colourPacket.green, twoFiftyFive);
+			colourPacket.blue = _mm_mul_ps(colourPacket.blue, twoFiftyFive);
+
+			colourPacket.red = _mm_min_ps(colourPacket.red, twoFiftyFive);
+			colourPacket.green = _mm_min_ps(colourPacket.green, twoFiftyFive);
+			colourPacket.blue = _mm_min_ps(colourPacket.blue, twoFiftyFive);
+
+			AJRGB *pixelPtr = pixelData + (x + y * width);
+
+			for (unsigned int i = 0; i < 4; i++)
+			{
+				pixelPtr[i].red = (uint8_t) asFloatArray(colourPacket.red)[i];
+				pixelPtr[i].green = (uint8_t) asFloatArray(colourPacket.green)[i];
+				pixelPtr[i].blue = (uint8_t) asFloatArray(colourPacket.blue)[i];
+			}
+		}
 	}
-
-	return nearestObstruction;
 }
 
-// Write the final bitmap to disk. Code adapted from another raytracer
-// from www.superjer.com under a "do whatever you like with this code"
-// license.
-void writeBitmap(AJRGB *pixelData, const int w, const int h, const int tc)
+void startRender(AJRGB *pixelData, const int width, const int height, int numThreads)
 {
-	FILE *f;
+	if (numThreads < 1)
+		numThreads = 1;
 
-	// 54 bytes in the bitmap file header plus 3 bytes per pixel.
-	const int filesize = 3 * w * h + bytesInBitmapHeader;
+#if defined(USEOPENMP)
+	omp_set_num_threads(numThreads);
+#pragma omp parallel for
+		for(int t = 0; t < numThreads; ++t)
+		{
+			render(pixelData, width, height, t * (height / numThreads), (height / numThreads));
+		}
+#else
+	boost::ptr_vector<thread> threads;
 
-	unsigned char bmpfileheader[14] = {'B', 'M', 0, 0, 0, 0, 0, 0, 0, 0, 54, 0, 0, 0};
-	unsigned char bmpinfoheader[40] = {40, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 24, 0};
+	for (int t = 0; t < numThreads; ++t)
+		threads.push_back(new thread(std::bind(&render, pixelData, width, height, t, numThreads)));
 
-	bmpfileheader[2] = (unsigned char) (filesize);
-	bmpfileheader[3] = (unsigned char) (filesize >> 8);
-	bmpfileheader[4] = (unsigned char) (filesize >> 16);
-	bmpfileheader[5] = (unsigned char) (filesize >> 24);
+	for(std::thread &t : threads)
+		t.join();
+#endif
+}
 
-	bmpinfoheader[4] = (unsigned char) (w);
-	bmpinfoheader[5] = (unsigned char) (w >> 8);
-	bmpinfoheader[6] = (unsigned char) (w >> 16);
-	bmpinfoheader[7] = (unsigned char) (w >> 24);
-	bmpinfoheader[8] = (unsigned char) (h);
-	bmpinfoheader[9] = (unsigned char) (h >> 8);
-	bmpinfoheader[10] = (unsigned char) (h >> 16);
-	bmpinfoheader[11] = (unsigned char) (h >> 24);
 
-	// Open/Create a file resulting image to disk.
-	char str[256];
-	sprintf(str, "myFirstImg_%d.bmp", tc);
+// At a given point in the world, reflect a ray off the sphere's normal to that point.
+void RTSphere::ReflectRayAtPoint(const SSEFloat &rayDirX, const SSEFloat &rayDirY, const SSEFloat &rayDirZ,
+								 const SSEFloat &intPointX, const SSEFloat &intPointY, const SSEFloat &intPointZ,
+								 SSEFloat &reflectedX, SSEFloat &reflectedY, SSEFloat &reflectedZ) const
+{
+	// Calculate the sphere normal at this point;
+	SSEFloat normalX = _mm_sub_ps(intPointX, _mm_set_ps1(position.x));
+	SSEFloat normalY = _mm_sub_ps(intPointY, _mm_set_ps1(position.y));
+	SSEFloat normalZ = _mm_sub_ps(intPointZ, _mm_set_ps1(position.z));
 
-	f = fopen(str, "wb");
+	// Normalise the sphere normal.
+	NormalizeSSE(normalX, normalY, normalZ);
 
-	// Write the header data.
-	fwrite(bmpfileheader, 1, 14, f);
-	fwrite(bmpinfoheader, 1, 40, f);
+	// Reflect the ray rayDir in normal and store in reflected.
+	ReflectSSE(rayDirX, rayDirY, rayDirZ, normalX, normalY, normalZ, reflectedX, reflectedY, reflectedZ);
 
-	// Every 'line' of bitmap data must have a multiple of 4 bytes, so we may
-	// need to write up to 3 bytes of extra data.
-	const unsigned char bmppad[3] = {0, 0, 0};
+	// Normalise the reflected ray.
+	NormalizeSSE(reflectedX, reflectedY, reflectedZ);
+}
 
-	// Calculate how many bytes need to be written as padding.
-	const int pad = (3 * w) % 4;
+SSEFloat minusOne = _mm_set_ps1(-1);
+SSEFloat two = _mm_set_ps1(2);
 
-	// Bitmaps must be written from the bottom row upwards rather than the top
-	// down.
-	for (int y = h - 1; y > -1; y--)
-	{
-		// For each row in the image, calculate its position in the array
-		// and write it out.
-		const int rowNum = y * w;
+// An SSE-optimised version of an already optimised ray-sphere intersection
+// algorithm. Also taken from PixelMachine at www.superjer.com.
+// The variable names are poor but they are in the quadratic formula too.
+SSEFloat RTSphere::IntersectTest(const Ray& rays) const
+{
+	SSEFloat t = minusOne;
 
-		// Written in BGR order, 1 row at a time.
-		fwrite(&pixelData[rowNum], 1, 3 * w, f);
+	SSEFloat sPosX = _mm_set_ps1(position.x);
+	SSEFloat sPosY = _mm_set_ps1(position.y);
+	SSEFloat sPosZ = _mm_set_ps1(position.z);
 
-		// If the rows need padding, write out 4 minus pad bytes of zero now.
-		if (pad > 0)
-			fwrite(bmppad, 1, 4 - pad, f);
-	}
+	SSEFloat ox = _mm_sub_ps(rays.positionX, sPosX);
+	SSEFloat oy = _mm_sub_ps(rays.positionY, sPosY);
+	SSEFloat oz = _mm_sub_ps(rays.positionZ, sPosZ);
 
-	fclose(f);
+	SSEFloat rDirXS = _mm_mul_ps(rays.directionX, rays.directionX);
+	SSEFloat rDirYS = _mm_mul_ps(rays.directionY, rays.directionY);
+	SSEFloat rDirZS = _mm_mul_ps(rays.directionZ, rays.directionZ);
+
+	SSEFloat a = _mm_mul_ps(_mm_add_ps(_mm_add_ps(rDirXS, rDirYS), rDirZS), two);
+
+	SSEFloat rDirOx = _mm_mul_ps(rays.directionX, ox);
+	SSEFloat rDirOy = _mm_mul_ps(rays.directionY, oy);
+	SSEFloat rDirOz = _mm_mul_ps(rays.directionZ, oz);
+
+	SSEFloat b = _mm_add_ps(rDirOx, rDirOy);
+	b = _mm_add_ps(b, rDirOz);
+	b = _mm_mul_ps(b, two);
+
+	ox = _mm_mul_ps(ox, ox);
+	oy = _mm_mul_ps(oy, oy);
+	oz = _mm_mul_ps(oz, oz);
+
+	SSEFloat c = _mm_add_ps(ox, oy);
+	c = _mm_add_ps(c, oz);
+	c = _mm_sub_ps(c, radiusSq);
+
+	SSEFloat twoac = _mm_mul_ps(_mm_mul_ps(a, c), two);
+
+	SSEFloat d = _mm_sub_ps(_mm_mul_ps(b, b), twoac);
+
+	SSEFloat answerUnknownMask = _mm_cmpge_ps(d, _mm_setzero_ps());
+
+	SSEFloat one = _mm_set_ps1(1);
+	a = _mm_div_ps(one, a);
+	d = _mm_sqrt_ps(d);
+
+	SSEFloat newerT = _mm_mul_ps(_mm_sub_ps(_mm_sub_ps(_mm_setzero_ps(), d), b), a);
+	t = Select(t, newerT, answerUnknownMask);
+
+	answerUnknownMask = _mm_cmplt_ps(t, _mm_setzero_ps());
+
+	newerT = _mm_mul_ps(_mm_sub_ps(d, b), a);
+	return Select(t, newerT, answerUnknownMask);
 }
