@@ -1,6 +1,14 @@
 // A C++ Raytracer written by Adam Miles.
 
+#ifdef _MSC_VER
+#	if _MSC_VER < 1700
+#		error Visual Studio before 2015 has crappy timers
+#	endif
+#endif
+
 #include <iostream>
+#include <iomanip>
+#include <chrono>
 
 #include "bitmap.h"
 #include "tracer.h"
@@ -26,70 +34,29 @@
 const int defaultScreenWidth = 12800;
 const int defaultScreenHeight = 7200;
 
-//
-//void render(AJRGB *pixelData, const int screenWidth, const int screenHeight, const int threadID, const int numThreads);
-//
-//inline SSEFloat getNearestObstruction(const Ray &rays);
-//
-//void raytrace(SSERGB &colour, const Ray &rays, const int iteration, const int w, const int h);
-//
-//void raytraceNonSSE(AJRGB &p, const Ray &ray);
-//
-//void setupScene();
-//
-//void startRender(AJRGB *pixelData, const int width, const int height, int numThreads);
-//
-//void writeBitmap(AJRGB *pixelData, const int screenWidth, const int screenHeight, const int threadCount);
-
 #ifndef _WIN32
 
-# include <ctime>
-# include <sys/time.h>
-#include <iomanip>
+#include <sys/time.h>
 
 #else
 # include <windows.h>
 #endif
 
+typedef std::chrono::high_resolution_clock our_clock;
+typedef std::chrono::duration<double, std::milli> duration_t;
+
+const duration_t very_large_time = std::chrono::seconds(std::numeric_limits<int>::max());
+
 struct timer
 {
-#ifndef _WIN32
-	double start;
+	const our_clock::time_point start;
 
-	timer()
-	{
-		timeval now;
-		gettimeofday(&now, 0);
-		start = now.tv_sec + (now.tv_usec / 1000000.0);
-	}
+	timer() : start(our_clock::now())
+	{}
 
-	double End()
+	duration_t End()
 	{
-		timeval now;
-		gettimeofday(&now, 0);
-		double end = now.tv_sec + (now.tv_usec / 1000000.0);
-		return static_cast<double>(end - start);
-	}
-
-#else
-	LARGE_INTEGER start;
-	timer()
-	{
-		QueryPerformanceCounter(&start);
-	}
-
-	double End()
-	{
-		LARGE_INTEGER end, freq;
-		QueryPerformanceCounter(&end);
-		QueryPerformanceFrequency(&freq);
-		return static_cast<double>(end.QuadPart-start.QuadPart)/freq.QuadPart;
-	}
-#endif
-
-	void output(double seconds)
-	{
-		std::cout << seconds * 1000 << "ms" << std::endl;
+		return std::chrono::duration<double, std::milli>(our_clock::now() - start);
 	}
 };
 
@@ -145,7 +112,7 @@ int main(int argc, char *argv[])
 	// Render the image
 	AJRGB *pixelData = new AJRGB[width * height];
 
-	double lowest = std::numeric_limits<double>().max();
+	duration_t overall_lowest = very_large_time;
 	int lowestThreads = 0;
 
 	int min_val;
@@ -165,31 +132,31 @@ int main(int argc, char *argv[])
 		{
 			memset(pixelData, 0, sizeof(AJRGB) * width * height);
 
-			double iLowest = std::numeric_limits<double>().max();
+			duration_t iteration_lowest = very_large_time;
 
 			for (int r = 0; r < numRuns; r++)
 			{
 				timer t;
 				startRender(pixelData, width, height, i);
-				double time = t.End();
+				duration_t time = t.End();
 
-				if (time < lowest)
+				if (time < overall_lowest)
 				{
-					lowest = time;
+					overall_lowest = time;
 					lowestThreads = i;
 				}
-				if (time < iLowest)
-					iLowest = time;
+				if (time < iteration_lowest)
+					iteration_lowest = time;
 			}
 
-			std::cout << setw(4) << right << i << ": " << iLowest * 1000 << std::endl;
+			std::cout << setw(4) << right << i << ": " << iteration_lowest.count() << std::endl;
 
 			if (i <= writeImagesUpTo)
 				writeBitmap(pixelData, width, height, i);
 		}
 
-	std::cout << setw(4) << right << "Interleaved version." << std::endl;
-	std::cout << setw(4) << right << "Lowest: " << lowest * 1000 << "ms at " << lowestThreads << " threads."
+	std::cout << "Interleaved version." << std::endl;
+	std::cout << setw(4) << right << "Lowest: " << overall_lowest.count() << "ms at " << lowestThreads << " threads."
 			  << std::endl;
 
 	delete[] pixelData;

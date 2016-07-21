@@ -108,18 +108,6 @@ SSEFloat LengthSSE(const SSEFloat &ax, const SSEFloat &ay, const SSEFloat &az)
 	return _mm_sqrt_ps(_mm_add_ps(_mm_add_ps(_mm_mul_ps(ax, ax), _mm_mul_ps(ay, ay)), _mm_mul_ps(az, az)));
 }
 
-// The infamous "fast inverse square root" from Quake 3 source and numerous
-// other articles.
-float InvSqrt(float x)
-{
-	float xhalf = 0.5 * x;
-	int i = *(int *) &x;
-	i = 0x5f3759df - (i >> 1);
-	x = *(float *) &i;
-	x = x * (1.5 - xhalf * x * x);
-	return x;
-}
-
 void Multiply(const V3 &a, const float &b, V3 &out)
 {
 	out.x = a.x * b;
@@ -141,15 +129,6 @@ void NormalizeSSE(SSEFloat &x, SSEFloat &y, SSEFloat &z)
 	x = _mm_mul_ps(x, oneOverLength);
 	y = _mm_mul_ps(y, oneOverLength);
 	z = _mm_mul_ps(z, oneOverLength);
-}
-
-void Normalize(V3 &out)
-{
-	float oneOverLength = InvSqrt(out.x * out.x + out.y * out.y + out.z * out.z);
-
-	out.x *= oneOverLength;
-	out.y *= oneOverLength;
-	out.z *= oneOverLength;
 }
 
 // The formula for reflecting a vector in a normal.
@@ -492,7 +471,10 @@ void raytrace(SSERGB &colour, const Ray &rays, const int iteration, const int w,
 	}
 }
 
-void render(AJRGB *pixelData, const int width, const int height, const int threadID, const int numThreads)
+void render(AJRGB *pixelData,
+			const uint32_t width, const uint32_t height,
+			const uint32_t threadID,
+			const uint32_t numThreads)
 {
 	// Calculate the height of the viewport depending on its width and the aspect
 	// ratio of the image.

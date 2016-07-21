@@ -1,14 +1,17 @@
-CC=g++
-CFLAGS=-Ofast -march=ivybridge -fexpensive-optimizations -ftree-loop-im -fivopts -ftree-loop-linear -fipa-matrix-reorg -ftracer -fweb $(XFLAGS)
+CXXFLAGS=-Ofast -std=c++11 -march=ivybridge -fexpensive-optimizations -ftree-loop-im -fivopts -ftree-loop-linear -fipa-matrix-reorg -ftracer -fweb $(XFLAGS)
 
 all: cpptracer
 
-out/combined.cpp: *.cpp
-	mkdir -p out
-	cat *.cpp > out/combined.cpp
+objects = main.o tracer.o bitmap.o
 
-cpptracer: out/combined.cpp Makefile
-	$(CC) $(CFLAGS) out/combined.cpp -lboost_thread -lboost_system -I${PWD} -o cpptracer
+main.o: bitmap.h tracer.h
+
+tracer.o: objects.h tracer.h
+
+bitmap.o: bitmap.h
+
+cpptracer: $(objects)
+	$(CXX) $(CXXFLAGS) $(objects) -lpthread -I${PWD} -o cpptracer
 	strip --strip-all cpptracer
 
 clean:

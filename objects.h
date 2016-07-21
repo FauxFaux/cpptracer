@@ -50,7 +50,7 @@ class RTSphere
 {
 public:
 
-	RTSphere() : radius(0), diffuse(1), specular(0), reflection(0), colour(1, 1, 1)
+	RTSphere() : colour(1, 1, 1), radius(0), diffuse(1), specular(0), reflection(0)
 	{
 		radiusSq = _mm_set1_ps(0);
 	};

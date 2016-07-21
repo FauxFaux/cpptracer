@@ -1,5 +1,17 @@
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.0)
 project(cpptracer)
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -pedantic -Wextra")
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} \
+ -march=native \
+ -fexpensive-optimizations \
+ -ftree-loop-im \
+ -fivopts \
+ -ftree-loop-linear \
+ -fipa-matrix-reorg \
+ -ftracer \
+ -fweb \
+")
 
 find_package(Threads)
 

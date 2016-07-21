@@ -4,10 +4,10 @@
 
 struct AJRGB
 {
-	AJRGB() : red(0), green(0), blue(0)
+	AJRGB() : blue(0), green(0), red(0)
 	{}
 
-	AJRGB(const uint8_t R, const uint8_t G, const uint8_t B) : red(R), green(G), blue(B)
+	AJRGB(const uint8_t R, const uint8_t G, const uint8_t B) : blue(B), green(G), red(R)
 	{}
 
 	uint8_t blue;

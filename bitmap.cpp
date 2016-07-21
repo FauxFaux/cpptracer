@@ -42,7 +42,7 @@ void writeBitmap(AJRGB *pixelData, const int w, const int h, const int tc)
 
 	// Every 'line' of bitmap data must have a multiple of 4 bytes, so we may
 	// need to write up to 3 bytes of extra data.
-	const unsigned char bmppad[3] = {0, 0, 0};
+	const unsigned char bmppad[3] =  {0, 0, 0};
 
 	// Calculate how many bytes need to be written as padding.
 	const int pad = (3 * w) % 4;

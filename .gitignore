@@ -12,3 +12,4 @@ ipch/
 out
 *.swp
 .idea
+*.o
