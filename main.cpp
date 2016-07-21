@@ -6,41 +6,26 @@
 #	endif
 #endif
 
+#include <chrono>
 #include <iostream>
 #include <iomanip>
-#include <chrono>
+#include <thread>
+
+#include <boost/ptr_container/ptr_vector.hpp>
 
 #include "bitmap.h"
-#include "tracer.h"
 
 
 // OpenMP doesn't support > 64 threads on my machine, and is thus cheating :p.
 //#define USEOPENMP
 
 #if defined(USEOPENMP)
-#include <omp.h>
-#endif
-
-#include <thread>
-#include <boost/ptr_container/ptr_vector.hpp>
-
-#ifndef _WINDOWS
-# if defined(WIN32) || defined(_WIN32)
-#  define _WINDOWS
-# endif
+#  include <omp.h>
 #endif
 
 
 const int defaultScreenWidth = 12800;
 const int defaultScreenHeight = 7200;
-
-#ifndef _WIN32
-
-#include <sys/time.h>
-
-#else
-# include <windows.h>
-#endif
 
 typedef std::chrono::high_resolution_clock our_clock;
 typedef std::chrono::duration<double, std::milli> duration_t;
@@ -84,7 +69,8 @@ int main(int argc, char *argv[])
 	if (argc == 2 && argv[1][0] == 'b')
 	{
 		bench = true;
-	} else
+	}
+	else
 	{
 
 		if (argc > 1)

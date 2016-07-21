@@ -7,7 +7,6 @@
 using std::thread;
 using std::bind;
 
-
 const float EPSILON = 0.001f;
 const float defaultViewportWidth = 0.1f;
 const float defaultNearClip = 0.1f;
@@ -19,19 +18,15 @@ RTLight lights[10];
 unsigned int numLights;
 
 const SSEFloat sseOne = _mm_set1_ps(1.0f);
+const SSEFloat sseZero = _mm_setzero_ps();
+const SSEFloat sseTrue = _mm_cmpeq_ps(sseZero, sseZero);
+const SSEFloat sseMiss = _mm_set1_ps(0xFFFFFFFF);
 
-SSEFloat zero = _mm_setzero_ps();
-SSEFloat trues = _mm_cmpeq_ps(zero, zero);
-SSEFloat miss = _mm_set1_ps(0xFFFFFFFF);
 
-
-#ifdef _WINDOWS
+#ifdef _MSC_VER
 # define asFloatArray(x) ((x).m128_f32)
 # define asUIntArray(x) ((x).m128_u32)
 #else
-
-# include <xmmintrin.h>
-
 # define asFloatArray(x) ((float*)(&x))
 # define asUIntArray(x) ((unsigned int*)(&x))
 #endif
@@ -174,31 +169,11 @@ void setupScene()
 	// this would be read in from some kind of script / scene file rather
 	// than being hard-coded :)
 
-	RTSphere sphere(V3(0, 0, 1.75f), 0.15f, SSERGB(1, 1, 1));
-	sphere.SetSpecular(0.25f);
-	sphere.SetReflection(0.9f);
-	sphere.SetDiffuse(0.25f);
-	spheres[0] = sphere;
-
-	RTSphere sphere2(V3(-0.3f, 0, 1.75f), 0.15f, SSERGB(1, 1, 0));
-	sphere2.SetSpecular(0.25f);
-	sphere2.SetReflection(0.25f);
-	spheres[1] = sphere2;
-
-	RTSphere sphere3(V3(0.3f, 0, 1.75f), 0.15f, SSERGB(0, 0, 1));
-	sphere3.SetSpecular(0.25f);
-	sphere3.SetReflection(0.25f);
-	spheres[2] = sphere3;
-
-	RTSphere sphere4(V3(0, 0.3f, 1.75f), 0.15f, SSERGB(1, 0, 0));
-	sphere4.SetSpecular(0.25f);
-	sphere4.SetReflection(0.25f);
-	spheres[3] = sphere4;
-
-	RTSphere sphere5(V3(0, -0.3f, 1.75f), 0.15f, SSERGB(0, 1, 0));
-	sphere5.SetSpecular(0.25f);
-	sphere5.SetReflection(0.25f);
-	spheres[4] = sphere5;
+	spheres[0] = RTSphere(V3(0, 0, 1.75f), 0.15f, SSERGB(1, 1, 1), 0.25f, 0.9f, 0.25f);
+	spheres[1] = RTSphere(V3(-0.3f, 0, 1.75f), 0.15f, SSERGB(1, 1, 0), 0.25f, 0.25f);
+	spheres[2] = RTSphere(V3(0.3f, 0, 1.75f), 0.15f, SSERGB(0, 0, 1), 0.25f, 0.25f);
+	spheres[3] = RTSphere(V3(0, 0.3f, 1.75f), 0.15f, SSERGB(1, 0, 0), 0.25f, 0.25f);
+	spheres[4] = RTSphere(V3(0, -0.3f, 1.75f), 0.15f, SSERGB(0, 1, 0), 0.25f, 0.25f);
 
 	numSpheres = 5;
 
@@ -226,15 +201,14 @@ void setupScene()
 
 SSEFloat getNearestObstruction(const Ray &rays)
 {
-	SSEFloat nearestObstruction = _mm_set1_ps(0xffffffff);
-	SSEFloat zero = _mm_setzero_ps();
+	SSEFloat nearestObstruction = sseMiss;
 
 	for (unsigned int s = 0; s < numSpheres; s++)
 	{
 		RTSphere &sphere = spheres[s];
 		SSEFloat distance = sphere.IntersectTest(rays);
 
-		SSEFloat gtZeroMask = _mm_cmpgt_ps(distance, zero);
+		SSEFloat gtZeroMask = _mm_cmpgt_ps(distance, sseZero);
 		SSEFloat ltNearestObs = _mm_cmplt_ps(distance, nearestObstruction);
 		SSEFloat mask = _mm_and_ps(gtZeroMask, ltNearestObs);
 		nearestObstruction = Select(nearestObstruction, distance, mask);
@@ -249,8 +223,8 @@ void raytrace(SSERGB &colour, const Ray &rays, const int iteration, const int w,
 	if (iteration > 10)
 		return;
 
-	SSEFloat isTracingMask = _mm_cmpneq_ps(rays.positionX, miss);
-	SSEFloat sseNearest = trues;
+	SSEFloat isTracingMask = _mm_cmpneq_ps(rays.positionX, sseMiss);
+	SSEFloat sseNearest = sseTrue;
 
 	unsigned int uniqueSpheres = 0;
 
@@ -265,7 +239,7 @@ void raytrace(SSERGB &colour, const Ray &rays, const int iteration, const int w,
 		RTSphere &sphere = spheres[s];
 		SSEFloat distance = sphere.IntersectTest(rays);
 
-		SSEFloat distGTZeroMask = _mm_cmpgt_ps(distance, zero);
+		SSEFloat distGTZeroMask = _mm_cmpgt_ps(distance, sseZero);
 		SSEFloat distLTNearestDistMask = _mm_cmplt_ps(distance, nearestDistance);
 		SSEFloat mask = _mm_and_ps(distGTZeroMask, distLTNearestDistMask);
 
@@ -273,7 +247,7 @@ void raytrace(SSERGB &colour, const Ray &rays, const int iteration, const int w,
 		nearestDistance = Select(nearestDistance, distance, mask);
 	}
 
-	sseNearest = Select(trues, sseNearest, isTracingMask);
+	sseNearest = Select(sseTrue, sseNearest, isTracingMask);
 	ALIGN16 unsigned int nearest[4];
 	_mm_store_ps((float *) nearest, sseNearest);
 
@@ -343,7 +317,7 @@ void raytrace(SSERGB &colour, const Ray &rays, const int iteration, const int w,
 			// Normalise the light direction.
 			NormalizeSSE(lightDirX, lightDirY, lightDirZ);
 
-			V3 &spherePosition = sphere.GetPosition();
+			const V3 &spherePosition = sphere.GetPosition();
 
 			// Calculate the normal at the intersection point, for a sphere this is
 			// simply the intersection point - sphere centre, normalised.
@@ -353,7 +327,7 @@ void raytrace(SSERGB &colour, const Ray &rays, const int iteration, const int w,
 
 			NormalizeSSE(sphereNormalX, sphereNormalY, sphereNormalZ);
 
-			SSERGB &sphereColour = sphere.GetColour();
+			const SSERGB &sphereColour = sphere.GetColour();
 			float reflectionFactor = sphere.GetReflection();
 
 			if (reflectionFactor > 0)
@@ -371,7 +345,7 @@ void raytrace(SSERGB &colour, const Ray &rays, const int iteration, const int w,
 				reflectedPacket.directionX = reflectionX;
 				reflectedPacket.directionY = reflectionY;
 				reflectedPacket.directionZ = reflectionZ;
-				reflectedPacket.positionX = Select(miss, intPointX, nearestMask);
+				reflectedPacket.positionX = Select(sseMiss, intPointX, nearestMask);
 				reflectedPacket.positionY = intPointY;
 				reflectedPacket.positionZ = intPointZ;
 
@@ -458,7 +432,7 @@ void raytrace(SSERGB &colour, const Ray &rays, const int iteration, const int w,
 					// If this ray is hitting this sphere, and it's dot product > 0
 					if (nearest[r] == sphereIndex && asFloatArray(specDP)[r] > 0)
 					{
-						const float specular = pow(asFloatArray(specDP)[r], 10) * sphere.GetSpecular();
+						const float specular = powf(asFloatArray(specDP)[r], 10) * sphere.GetSpecular();
 
 						//SSEFloat sseSpecular
 						asFloatArray(colour.red)[r] += specular;

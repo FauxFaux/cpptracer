@@ -50,21 +50,19 @@ class RTSphere
 {
 public:
 
-	RTSphere() : colour(1, 1, 1), radius(0), diffuse(1), specular(0), reflection(0)
-	{
-		radiusSq = _mm_set1_ps(0);
-	};
+	RTSphere() : RTSphere(V3(), 0, SSERGB(1, 1, 1))
+	{};
 
-	RTSphere(const V3 &_position, const float _radius, const SSERGB &_colour) :
-			position(_position), colour(_colour), radius(_radius), diffuse(1), specular(0), reflection(0)
-	{
-		radiusSq = _mm_set1_ps(_radius * _radius);
-	};
-
-	V3 &GetPosition()
+	RTSphere(const V3 &_position, const float _radius, const SSERGB &_colour,
+			 float _specular = 0, float _reflection = 0, float _diffuse = 1) :
+			position(_position), colour(_colour), radius(_radius),
+			diffuse(_diffuse), specular(_specular), reflection(_reflection), radiusSq(_mm_set1_ps(_radius * _radius))
+	{};
+	
+	const V3 &GetPosition()
 	{ return position; }
 
-	SSERGB &GetColour()
+	const SSERGB &GetColour()
 	{ return colour; }
 
 	float GetRadius()
@@ -78,27 +76,6 @@ public:
 
 	float GetReflection()
 	{ return reflection; }
-
-	void SetPosition(V3 &_position)
-	{ position = _position; }
-
-	void SetColour(SSERGB &_colour)
-	{ colour = _colour; }
-
-	void SetRadius(float _radius)
-	{
-		radius = _radius;
-		radiusSq = _mm_set1_ps(radius * radius);
-	}
-
-	void SetDiffuse(float _diffuse)
-	{ diffuse = _diffuse; }
-
-	void SetSpecular(float _specular)
-	{ specular = _specular; }
-
-	void SetReflection(float _reflection)
-	{ reflection = _reflection; }
 
 	SSEFloat IntersectTest(const Ray &ray) const;
 
