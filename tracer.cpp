@@ -58,7 +58,7 @@ inline unsigned int MaskToUInt(SSEFloat mask)
 {
 	unsigned int CR = 0;
 	int iTest = _mm_movemask_ps(mask);
-	if (iTest==0xf)
+	if (iTest == 0xf)
 	{
 		CR = XM_CRMASK_CR6TRUE;
 	}
@@ -72,27 +72,27 @@ inline unsigned int MaskToUInt(SSEFloat mask)
 
 inline bool AnyComponentGreaterThanZero(SSEFloat v1)
 {
-	SSEFloat mask = _mm_cmpgt_ps(v1,_mm_setzero_ps());
+	SSEFloat mask = _mm_cmpgt_ps(v1, _mm_setzero_ps());
 
 	return XMComparisonAnyTrue(MaskToUInt(mask));
 }
 
 inline bool AllComponentGreaterEqualThanZero(SSEFloat v1)
 {
-	SSEFloat mask = _mm_cmpge_ps(v1,_mm_setzero_ps());
+	SSEFloat mask = _mm_cmpge_ps(v1, _mm_setzero_ps());
 
 	return XMComparisonAllTrue(MaskToUInt(mask));
 }
 
 
-void Add(const V3& a, const V3& b, V3& out)
+void Add(const V3 &a, const V3 &b, V3 &out)
 {
 	out.x = a.x + b.x;
 	out.y = a.y + b.y;
 	out.z = a.z + b.z;
 }
 
-float Dot(const V3& a, const V3& b)
+float Dot(const V3 &a, const V3 &b)
 {
 	return a.x * b.x + a.y * b.y + a.z * b.z;
 }
@@ -112,22 +112,22 @@ SSEFloat LengthSSE(const SSEFloat &ax, const SSEFloat &ay, const SSEFloat &az)
 // other articles.
 float InvSqrt(float x)
 {
-	float xhalf = 0.5*x;
-	int i = *(int*)&x;
+	float xhalf = 0.5 * x;
+	int i = *(int *) &x;
 	i = 0x5f3759df - (i >> 1);
-	x = *(float*)&i;
+	x = *(float *) &i;
 	x = x * (1.5 - xhalf * x * x);
 	return x;
 }
 
-void Multiply(const V3& a, const float& b, V3& out)
+void Multiply(const V3 &a, const float &b, V3 &out)
 {
 	out.x = a.x * b;
 	out.y = a.y * b;
 	out.z = a.z * b;
 }
 
-void MultiplySSE(const SSEFloat* xyzc, SSEFloat* xyz)
+void MultiplySSE(const SSEFloat *xyzc, SSEFloat *xyz)
 {
 	xyz[0] = _mm_mul_ps(xyzc[0], xyzc[3]);
 	xyz[1] = _mm_mul_ps(xyzc[1], xyzc[3]);
@@ -162,14 +162,15 @@ void ReflectSSE(const SSEFloat &rayDirX, const SSEFloat &rayDirY, const SSEFloat
 	reflectedZ = rayDirZ;
 
 	SSEFloat numByTwo =
-			_mm_mul_ps(_mm_add_ps(_mm_add_ps(_mm_mul_ps(rayDirX, normalX), _mm_mul_ps(rayDirY, normalY)), _mm_mul_ps(rayDirZ, normalZ)), _mm_set_ps1(2));
+			_mm_mul_ps(_mm_add_ps(_mm_add_ps(_mm_mul_ps(rayDirX, normalX), _mm_mul_ps(rayDirY, normalY)),
+								  _mm_mul_ps(rayDirZ, normalZ)), _mm_set_ps1(2));
 
 	reflectedX = _mm_sub_ps(reflectedX, _mm_mul_ps(numByTwo, normalX));
 	reflectedY = _mm_sub_ps(reflectedY, _mm_mul_ps(numByTwo, normalY));
 	reflectedZ = _mm_sub_ps(reflectedZ, _mm_mul_ps(numByTwo, normalZ));
 }
 
-void Subtract(const V3& a, const V3& b, V3& out)
+void Subtract(const V3 &a, const V3 &b, V3 &out)
 {
 	out.x = a.x - b.x;
 	out.y = a.y - b.y;
@@ -579,7 +580,7 @@ void startRender(AJRGB *pixelData, const int width, const int height, int numThr
 	for (int t = 0; t < numThreads; ++t)
 		threads.push_back(new thread(std::bind(&render, pixelData, width, height, t, numThreads)));
 
-	for(std::thread &t : threads)
+	for (std::thread &t : threads)
 		t.join();
 #endif
 }
@@ -611,7 +612,7 @@ SSEFloat two = _mm_set_ps1(2);
 // An SSE-optimised version of an already optimised ray-sphere intersection
 // algorithm. Also taken from PixelMachine at www.superjer.com.
 // The variable names are poor but they are in the quadratic formula too.
-SSEFloat RTSphere::IntersectTest(const Ray& rays) const
+SSEFloat RTSphere::IntersectTest(const Ray &rays) const
 {
 	SSEFloat t = minusOne;
 

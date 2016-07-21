@@ -94,7 +94,6 @@ struct timer
 };
 
 
-
 int main(int argc, char *argv[])
 {
 	using std::setw;
