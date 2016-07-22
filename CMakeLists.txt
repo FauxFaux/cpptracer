@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.0)
 project(cpptracer)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -pedantic -Wextra")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -pedantic -Wextra -mavx")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} \
  -march=native \
  -fexpensive-optimizations \
@@ -27,7 +27,7 @@ add_executable(cpptracer
 set(TRACER_LIBRARIES ${CMAKE_THREAD_LIBS_INIT})
 
 target_link_libraries(cpptracer
-        ${TRACER_LIBRRARIES}
+        ${TRACER_LIBRARIES}
         )
 
 target_compile_features(cpptracer PUBLIC
@@ -43,7 +43,7 @@ if (GTEST_FOUND)
     target_link_libraries(test_tracer
             ${GTEST_BOTH_LIBRARIES}
             ${CMAKE_THREAD_LIBS_INIT}
-            ${TRACER_LIBRRARIES}
+            ${TRACER_LIBRARIES}
             )
     target_compile_features(test_tracer PUBLIC
             cxx_range_for

@@ -17,10 +17,10 @@ unsigned int numSpheres;
 RTLight lights[10];
 unsigned int numLights;
 
-const SSEFloat sseOne = _mm_set1_ps(1.0f);
-const SSEFloat sseZero = _mm_setzero_ps();
-const SSEFloat sseTrue = _mm_cmpeq_ps(sseZero, sseZero);
-const SSEFloat sseMiss = _mm_set1_ps(0xFFFFFFFF);
+const SSEFloat sseOne = aj_set1_ps(1.0f);
+const SSEFloat sseZero = aj_setzero_ps();
+const SSEFloat sseTrue = aj_cmpeq_ps(sseZero, sseZero);
+const SSEFloat sseMiss = aj_set1_ps(0xFFFFFFFF);
 
 
 #ifdef _MSC_VER
@@ -31,28 +31,23 @@ const SSEFloat sseMiss = _mm_set1_ps(0xFFFFFFFF);
 # define asUIntArray(x) ((unsigned int*)(&x))
 #endif
 
-#ifdef __GNUC__
-# define ALIGN16 __attribute__ ((aligned (16)))
-#else
-# define ALIGN16 __declspec(align(16))
-#endif
 
 #define XM_CRMASK_CR6TRUE   0x00000080
 #define XM_CRMASK_CR6FALSE  0x00000020
 #define XMComparisonAnyTrue(CR)  (((CR) & XM_CRMASK_CR6FALSE) != XM_CRMASK_CR6FALSE)
 #define XMComparisonAllTrue(CR)  (((CR) & XM_CRMASK_CR6TRUE) == XM_CRMASK_CR6TRUE)
 
-inline SSEFloat Select(SSEFloat v1, SSEFloat v2, SSEFloat control)
+static SSEFloat Select(SSEFloat v1, SSEFloat v2, SSEFloat control)
 {
-	SSEFloat vTemp1 = _mm_andnot_ps(control, v1);
-	SSEFloat vTemp2 = _mm_and_ps(v2, control);
-	return _mm_or_ps(vTemp1, vTemp2);
+	SSEFloat vTemp1 = aj_andnot_ps(control, v1);
+	SSEFloat vTemp2 = aj_and_ps(v2, control);
+	return aj_or_ps(vTemp1, vTemp2);
 }
 
-inline unsigned int MaskToUInt(SSEFloat mask)
+static unsigned int MaskToUInt(SSEFloat mask)
 {
 	unsigned int CR = 0;
-	int iTest = _mm_movemask_ps(mask);
+	int iTest = aj_movemask_ps(mask);
 	if (iTest == 0xf)
 	{
 		CR = XM_CRMASK_CR6TRUE;
@@ -65,16 +60,16 @@ inline unsigned int MaskToUInt(SSEFloat mask)
 	return CR;
 }
 
-inline bool AnyComponentGreaterThanZero(SSEFloat v1)
+static bool AnyComponentGreaterThanZero(SSEFloat v1)
 {
-	SSEFloat mask = _mm_cmpgt_ps(v1, _mm_setzero_ps());
+	SSEFloat mask = aj_cmpgt_ps(v1, aj_setzero_ps());
 
 	return XMComparisonAnyTrue(MaskToUInt(mask));
 }
 
-inline bool AllComponentGreaterEqualThanZero(SSEFloat v1)
+static bool AllComponentGreaterEqualThanZero(SSEFloat v1)
 {
-	SSEFloat mask = _mm_cmpge_ps(v1, _mm_setzero_ps());
+	SSEFloat mask = aj_cmpge_ps(v1, aj_setzero_ps());
 
 	return XMComparisonAllTrue(MaskToUInt(mask));
 }
@@ -95,12 +90,12 @@ float Dot(const V3 &a, const V3 &b)
 SSEFloat DotSSE(const SSEFloat &ax, const SSEFloat &ay, const SSEFloat &az,
 				const SSEFloat &bx, const SSEFloat &by, const SSEFloat &bz)
 {
-	return _mm_add_ps(_mm_add_ps(_mm_mul_ps(ax, bx), _mm_mul_ps(ay, by)), _mm_mul_ps(az, bz));
+	return aj_add_ps(aj_add_ps(aj_mul_ps(ax, bx), aj_mul_ps(ay, by)), aj_mul_ps(az, bz));
 }
 
 SSEFloat LengthSSE(const SSEFloat &ax, const SSEFloat &ay, const SSEFloat &az)
 {
-	return _mm_sqrt_ps(_mm_add_ps(_mm_add_ps(_mm_mul_ps(ax, ax), _mm_mul_ps(ay, ay)), _mm_mul_ps(az, az)));
+	return aj_sqrt_ps(aj_add_ps(aj_add_ps(aj_mul_ps(ax, ax), aj_mul_ps(ay, ay)), aj_mul_ps(az, az)));
 }
 
 void Multiply(const V3 &a, const float &b, V3 &out)
@@ -112,18 +107,18 @@ void Multiply(const V3 &a, const float &b, V3 &out)
 
 void MultiplySSE(const SSEFloat *xyzc, SSEFloat *xyz)
 {
-	xyz[0] = _mm_mul_ps(xyzc[0], xyzc[3]);
-	xyz[1] = _mm_mul_ps(xyzc[1], xyzc[3]);
-	xyz[2] = _mm_mul_ps(xyzc[2], xyzc[3]);
+	xyz[0] = aj_mul_ps(xyzc[0], xyzc[3]);
+	xyz[1] = aj_mul_ps(xyzc[1], xyzc[3]);
+	xyz[2] = aj_mul_ps(xyzc[2], xyzc[3]);
 }
 
 void NormalizeSSE(SSEFloat &x, SSEFloat &y, SSEFloat &z)
 {
-	SSEFloat oneOverLength = _mm_rsqrt_ps(_mm_add_ps(_mm_add_ps(_mm_mul_ps(x, x), _mm_mul_ps(y, y)), _mm_mul_ps(z, z)));
+	SSEFloat oneOverLength = aj_rsqrt_ps(aj_add_ps(aj_add_ps(aj_mul_ps(x, x), aj_mul_ps(y, y)), aj_mul_ps(z, z)));
 
-	x = _mm_mul_ps(x, oneOverLength);
-	y = _mm_mul_ps(y, oneOverLength);
-	z = _mm_mul_ps(z, oneOverLength);
+	x = aj_mul_ps(x, oneOverLength);
+	y = aj_mul_ps(y, oneOverLength);
+	z = aj_mul_ps(z, oneOverLength);
 }
 
 // The formula for reflecting a vector in a normal.
@@ -136,12 +131,12 @@ void ReflectSSE(const SSEFloat &rayDirX, const SSEFloat &rayDirY, const SSEFloat
 	reflectedZ = rayDirZ;
 
 	SSEFloat numByTwo =
-			_mm_mul_ps(_mm_add_ps(_mm_add_ps(_mm_mul_ps(rayDirX, normalX), _mm_mul_ps(rayDirY, normalY)),
-								  _mm_mul_ps(rayDirZ, normalZ)), _mm_set_ps1(2));
+			aj_mul_ps(aj_add_ps(aj_add_ps(aj_mul_ps(rayDirX, normalX), aj_mul_ps(rayDirY, normalY)),
+								aj_mul_ps(rayDirZ, normalZ)), aj_set1_ps(2));
 
-	reflectedX = _mm_sub_ps(reflectedX, _mm_mul_ps(numByTwo, normalX));
-	reflectedY = _mm_sub_ps(reflectedY, _mm_mul_ps(numByTwo, normalY));
-	reflectedZ = _mm_sub_ps(reflectedZ, _mm_mul_ps(numByTwo, normalZ));
+	reflectedX = aj_sub_ps(reflectedX, aj_mul_ps(numByTwo, normalX));
+	reflectedY = aj_sub_ps(reflectedY, aj_mul_ps(numByTwo, normalY));
+	reflectedZ = aj_sub_ps(reflectedZ, aj_mul_ps(numByTwo, normalZ));
 }
 
 void Subtract(const V3 &a, const V3 &b, V3 &out)
@@ -151,16 +146,16 @@ void Subtract(const V3 &a, const V3 &b, V3 &out)
 	out.z = a.z - b.z;
 }
 
-inline SSEFloat SetFromUInt(unsigned int x)
+static SSEFloat SetFromUInt(unsigned int x)
 {
-	__m128i V = _mm_set1_epi32(x);
-	return reinterpret_cast<__m128 *>(&V)[0];
+	SSEInt V = aj_set1_epi32(x);
+	return reinterpret_cast<SSEFloat *>(&V)[0];
 }
 
-inline SSEFloat SetFromUIntPtr(unsigned int *p)
+static SSEFloat SetFromUIntPtr(unsigned int *p)
 {
-	__m128i V = _mm_loadu_si128((const __m128i *) p);
-	return reinterpret_cast<__m128 *>(&V)[0];
+	SSEInt V = aj_loadu_si((const SSEInt *) p);
+	return reinterpret_cast<SSEFloat *>(&V)[0];
 }
 
 void setupScene()
@@ -208,9 +203,9 @@ SSEFloat getNearestObstruction(const Ray &rays)
 		RTSphere &sphere = spheres[s];
 		SSEFloat distance = sphere.IntersectTest(rays);
 
-		SSEFloat gtZeroMask = _mm_cmpgt_ps(distance, sseZero);
-		SSEFloat ltNearestObs = _mm_cmplt_ps(distance, nearestObstruction);
-		SSEFloat mask = _mm_and_ps(gtZeroMask, ltNearestObs);
+		SSEFloat gtZeroMask = aj_cmpgt_ps(distance, sseZero);
+		SSEFloat ltNearestObs = aj_cmplt_ps(distance, nearestObstruction);
+		SSEFloat mask = aj_and_ps(gtZeroMask, ltNearestObs);
 		nearestObstruction = Select(nearestObstruction, distance, mask);
 	}
 
@@ -223,13 +218,13 @@ void raytrace(SSERGB &colour, const Ray &rays, const int iteration, const int w,
 	if (iteration > 10)
 		return;
 
-	SSEFloat isTracingMask = _mm_cmpneq_ps(rays.positionX, sseMiss);
+	SSEFloat isTracingMask = aj_cmpneq_ps(rays.positionX, sseMiss);
 	SSEFloat sseNearest = sseTrue;
 
 	unsigned int uniqueSpheres = 0;
 
 	// Set the nearest intersection to as large as possible.
-	SSEFloat nearestDistance = _mm_set_ps1(std::numeric_limits<float>().max());
+	SSEFloat nearestDistance = aj_set1_ps(std::numeric_limits<float>().max());
 
 	// For every sphere in the scene see if the ray intersects it.
 	for (unsigned int s = 0; s < numSpheres; s++)
@@ -239,22 +234,22 @@ void raytrace(SSERGB &colour, const Ray &rays, const int iteration, const int w,
 		RTSphere &sphere = spheres[s];
 		SSEFloat distance = sphere.IntersectTest(rays);
 
-		SSEFloat distGTZeroMask = _mm_cmpgt_ps(distance, sseZero);
-		SSEFloat distLTNearestDistMask = _mm_cmplt_ps(distance, nearestDistance);
-		SSEFloat mask = _mm_and_ps(distGTZeroMask, distLTNearestDistMask);
+		SSEFloat distGTZeroMask = aj_cmpgt_ps(distance, sseZero);
+		SSEFloat distLTNearestDistMask = aj_cmplt_ps(distance, nearestDistance);
+		SSEFloat mask = aj_and_ps(distGTZeroMask, distLTNearestDistMask);
 
 		sseNearest = Select(sseNearest, SetFromUInt(s), mask);
 		nearestDistance = Select(nearestDistance, distance, mask);
 	}
 
 	sseNearest = Select(sseTrue, sseNearest, isTracingMask);
-	ALIGN16 unsigned int nearest[4];
-	_mm_store_ps((float *) nearest, sseNearest);
+	AJ_ALIGN unsigned int nearest[batch];
+	aj_store_ps((float *) nearest, sseNearest);
 
-	ALIGN16 unsigned int spheresHit[4] = {0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF};
+	AJ_ALIGN unsigned int spheresHit[batch] = SPHERES_HIT_INITIALISER;
 
 	// NO idea how to sse this.
-	for (int n = 0; n < 4; n++)
+	for (int n = 0; n < batch; n++)
 	{
 		if (nearest[n] != 0xFFFFFFFF)
 		{
@@ -278,23 +273,23 @@ void raytrace(SSERGB &colour, const Ray &rays, const int iteration, const int w,
 		RTSphere &sphere = spheres[sphereIndex];    // The sphere to be tested.
 
 		SSEFloat sseSI = SetFromUInt(sphereIndex);
-		SSEFloat nearestMask = _mm_cmpeq_ps(sseNearest, sseSI);
+		SSEFloat nearestMask = aj_cmpeq_ps(sseNearest, sseSI);
 
 		// Calculate the distance to intersection point minus the small amount
 		// to avoid the intersection point actually intersecting the sphere.
-		SSEFloat mult = _mm_mul_ps(nearestDistance, _mm_set_ps1(1.0f - EPSILON));
+		SSEFloat mult = aj_mul_ps(nearestDistance, aj_set1_ps(1.0f - EPSILON));
 
 		// The normalised ray vector multiplied by the distance to the
 		// intersection point, less the small "nearly 1" multiplier - 'mult'.
-		SSEFloat extraX = _mm_mul_ps(rays.directionX, mult);
-		SSEFloat extraY = _mm_mul_ps(rays.directionY, mult);
-		SSEFloat extraZ = _mm_mul_ps(rays.directionZ, mult);
+		SSEFloat extraX = aj_mul_ps(rays.directionX, mult);
+		SSEFloat extraY = aj_mul_ps(rays.directionY, mult);
+		SSEFloat extraZ = aj_mul_ps(rays.directionZ, mult);
 
 		// The intersection point is the ray's initial position plus the ray's
 		// direction, after being multiplied by mult.
-		SSEFloat intPointX = _mm_add_ps(extraX, rays.positionX);
-		SSEFloat intPointY = _mm_add_ps(extraY, rays.positionY);
-		SSEFloat intPointZ = _mm_add_ps(extraZ, rays.positionZ);
+		SSEFloat intPointX = aj_add_ps(extraX, rays.positionX);
+		SSEFloat intPointY = aj_add_ps(extraY, rays.positionY);
+		SSEFloat intPointZ = aj_add_ps(extraZ, rays.positionZ);
 
 		// For every light in the scene, we need to check if it is casting
 		// light onto an object for both diffuse and specular lighting.
@@ -303,14 +298,14 @@ void raytrace(SSERGB &colour, const Ray &rays, const int iteration, const int w,
 			RTLight &light = lights[i];
 
 			// The i'th light's position.
-			SSEFloat lightPosX = _mm_set_ps1(light.position.x);
-			SSEFloat lightPosY = _mm_set_ps1(light.position.y);
-			SSEFloat lightPosZ = _mm_set_ps1(light.position.z);
+			SSEFloat lightPosX = aj_set1_ps(light.position.x);
+			SSEFloat lightPosY = aj_set1_ps(light.position.y);
+			SSEFloat lightPosZ = aj_set1_ps(light.position.z);
 
 			// The i'th light's direction.
-			SSEFloat lightDirX = _mm_sub_ps(lightPosX, intPointX);
-			SSEFloat lightDirY = _mm_sub_ps(lightPosY, intPointY);
-			SSEFloat lightDirZ = _mm_sub_ps(lightPosZ, intPointZ);
+			SSEFloat lightDirX = aj_sub_ps(lightPosX, intPointX);
+			SSEFloat lightDirY = aj_sub_ps(lightPosY, intPointY);
+			SSEFloat lightDirZ = aj_sub_ps(lightPosZ, intPointZ);
 
 			SSEFloat distanceToLight = LengthSSE(lightDirX, lightDirY, lightDirZ);
 
@@ -321,9 +316,9 @@ void raytrace(SSERGB &colour, const Ray &rays, const int iteration, const int w,
 
 			// Calculate the normal at the intersection point, for a sphere this is
 			// simply the intersection point - sphere centre, normalised.
-			SSEFloat sphereNormalX = _mm_sub_ps(intPointX, _mm_set_ps1(spherePosition.x));
-			SSEFloat sphereNormalY = _mm_sub_ps(intPointY, _mm_set_ps1(spherePosition.y));
-			SSEFloat sphereNormalZ = _mm_sub_ps(intPointZ, _mm_set_ps1(spherePosition.z));
+			SSEFloat sphereNormalX = aj_sub_ps(intPointX, aj_set1_ps(spherePosition.x));
+			SSEFloat sphereNormalY = aj_sub_ps(intPointY, aj_set1_ps(spherePosition.y));
+			SSEFloat sphereNormalZ = aj_sub_ps(intPointZ, aj_set1_ps(spherePosition.z));
 
 			NormalizeSSE(sphereNormalX, sphereNormalY, sphereNormalZ);
 
@@ -351,11 +346,11 @@ void raytrace(SSERGB &colour, const Ray &rays, const int iteration, const int w,
 
 				raytrace(colour, reflectedPacket, iteration + 1, w, h);
 
-				SSEFloat sseRF = _mm_set1_ps(reflectionFactor);
+				SSEFloat sseRF = aj_set1_ps(reflectionFactor);
 
-				SSEFloat newRed = _mm_mul_ps(_mm_mul_ps(colour.red, sseRF), sphereColour.red);
-				SSEFloat newGreen = _mm_mul_ps(_mm_mul_ps(colour.green, sseRF), sphereColour.green);
-				SSEFloat newBlue = _mm_mul_ps(_mm_mul_ps(colour.blue, sseRF), sphereColour.blue);
+				SSEFloat newRed = aj_mul_ps(aj_mul_ps(colour.red, sseRF), sphereColour.red);
+				SSEFloat newGreen = aj_mul_ps(aj_mul_ps(colour.green, sseRF), sphereColour.green);
+				SSEFloat newBlue = aj_mul_ps(aj_mul_ps(colour.blue, sseRF), sphereColour.blue);
 
 				colour.red = Select(colour.red, newRed, nearestMask);
 				colour.green = Select(colour.green, newGreen, nearestMask);
@@ -366,7 +361,7 @@ void raytrace(SSERGB &colour, const Ray &rays, const int iteration, const int w,
 			const SSEFloat dotProduct = DotSSE(sphereNormalX, sphereNormalY, sphereNormalZ,
 											   lightDirX, lightDirY, lightDirZ);
 
-			SSEFloat dpgtZeroMask = _mm_cmpgt_ps(dotProduct, _mm_setzero_ps());
+			SSEFloat dpgtZeroMask = aj_cmpgt_ps(dotProduct, aj_setzero_ps());
 
 			if (AnyComponentGreaterThanZero(dotProduct))
 			{
@@ -379,25 +374,25 @@ void raytrace(SSERGB &colour, const Ray &rays, const int iteration, const int w,
 				obstructionPacket.positionZ = intPointZ;
 
 				SSEFloat nearestObstruction = getNearestObstruction(obstructionPacket);
-				SSEFloat validHitMask = _mm_and_ps(nearestMask, dpgtZeroMask);
+				SSEFloat validHitMask = aj_and_ps(nearestMask, dpgtZeroMask);
 
-				SSEFloat obstructedMask = _mm_cmplt_ps(nearestObstruction, distanceToLight);
-				SSEFloat shade = Select(sseOne, _mm_setzero_ps(), obstructedMask);
-				SSEFloat shadeGTZeroMask = _mm_cmpgt_ps(shade, _mm_setzero_ps());
+				SSEFloat obstructedMask = aj_cmplt_ps(nearestObstruction, distanceToLight);
+				SSEFloat shade = Select(sseOne, aj_setzero_ps(), obstructedMask);
+				SSEFloat shadeGTZeroMask = aj_cmpgt_ps(shade, aj_setzero_ps());
 
-				validHitMask = _mm_and_ps(validHitMask, shadeGTZeroMask);
+				validHitMask = aj_and_ps(validHitMask, shadeGTZeroMask);
 
-				SSEFloat lightPower = _mm_set1_ps(light.power);
-				SSEFloat sphereDiffuse = _mm_set1_ps(sphere.GetDiffuse());
+				SSEFloat lightPower = aj_set1_ps(light.power);
+				SSEFloat sphereDiffuse = aj_set1_ps(sphere.GetDiffuse());
 
-				SSEFloat newRed = _mm_add_ps(_mm_mul_ps(
-						_mm_mul_ps(_mm_mul_ps(_mm_mul_ps(sphereColour.red, dotProduct), lightPower), sphereDiffuse),
+				SSEFloat newRed = aj_add_ps(aj_mul_ps(
+						aj_mul_ps(aj_mul_ps(aj_mul_ps(sphereColour.red, dotProduct), lightPower), sphereDiffuse),
 						shade), colour.red);
-				SSEFloat newGreen = _mm_add_ps(_mm_mul_ps(
-						_mm_mul_ps(_mm_mul_ps(_mm_mul_ps(sphereColour.green, dotProduct), lightPower), sphereDiffuse),
+				SSEFloat newGreen = aj_add_ps(aj_mul_ps(
+						aj_mul_ps(aj_mul_ps(aj_mul_ps(sphereColour.green, dotProduct), lightPower), sphereDiffuse),
 						shade), colour.green);
-				SSEFloat newBlue = _mm_add_ps(_mm_mul_ps(
-						_mm_mul_ps(_mm_mul_ps(_mm_mul_ps(sphereColour.blue, dotProduct), lightPower), sphereDiffuse),
+				SSEFloat newBlue = aj_add_ps(aj_mul_ps(
+						aj_mul_ps(aj_mul_ps(aj_mul_ps(sphereColour.blue, dotProduct), lightPower), sphereDiffuse),
 						shade), colour.blue);
 
 				colour.red = Select(colour.red, newRed, validHitMask);
@@ -410,9 +405,9 @@ void raytrace(SSERGB &colour, const Ray &rays, const int iteration, const int w,
 			if (sphere.GetSpecular() > 0)
 			{
 				// Calculate the vector from intersection point back to the light.
-				SSEFloat toLightVectorX = _mm_sub_ps(lightPosX, intPointX);
-				SSEFloat toLightVectorY = _mm_sub_ps(lightPosY, intPointY);
-				SSEFloat toLightVectorZ = _mm_sub_ps(lightPosZ, intPointZ);
+				SSEFloat toLightVectorX = aj_sub_ps(lightPosX, intPointX);
+				SSEFloat toLightVectorY = aj_sub_ps(lightPosY, intPointY);
+				SSEFloat toLightVectorZ = aj_sub_ps(lightPosZ, intPointZ);
 
 				NormalizeSSE(toLightVectorX, toLightVectorY, toLightVectorZ);
 
@@ -427,7 +422,7 @@ void raytrace(SSERGB &colour, const Ray &rays, const int iteration, const int w,
 				const SSEFloat specDP = DotSSE(rays.directionX, rays.directionY, rays.directionZ,
 											   reflectionX, reflectionY, reflectionZ);
 
-				for (int r = 0; r < 4; r++)
+				for (int r = 0; r < batch; r++)
 				{
 					// If this ray is hitting this sphere, and it's dot product > 0
 					if (nearest[r] == sphereIndex && asFloatArray(specDP)[r] > 0)
@@ -456,59 +451,59 @@ void render(AJRGB *pixelData,
 	const float viewportHeight = viewportWidth / ((float) width / height);
 
 	// Calculate the width and height of a pixel, normally square.
-	SSEFloat pixelWidth = _mm_set1_ps(viewportWidth / width);
-	SSEFloat pixelHeight = _mm_set1_ps(viewportHeight / height);
+	SSEFloat pixelWidth = aj_set1_ps(viewportWidth / width);
+	SSEFloat pixelHeight = aj_set1_ps(viewportHeight / height);
 
 	// Constants used in calculating each ray's direction.
-	SSEFloat halfX = _mm_set1_ps((width - 1) / 2);
-	SSEFloat halfY = _mm_set1_ps((height - 1) / 2);
+	SSEFloat halfX = aj_set1_ps((width - 1) / 2);
+	SSEFloat halfY = aj_set1_ps((height - 1) / 2);
 
 	// A packet of four rays used for the SSE version.
 	Ray rayPacket;
 
-	SSEFloat a = _mm_setr_ps(0, 1, 2, 3);
-	SSEFloat twoFiftyFive = _mm_set1_ps(255.0f);
+	SSEFloat batch_indexes = aj_set_offsets();
+	SSEFloat twoFiftyFive = aj_set1_ps(255.0f);
 
 	SSERGB colourPacket(0, 0, 0);
 
 	// Scanning across in rows from the top
 	for (unsigned int y = threadID; y < height; y += numThreads)
 	{
-		SSEFloat sseY = _mm_set1_ps(y);
+		SSEFloat sseY = aj_set1_ps(y);
 
 		// Four pixels at a time.
-		for (unsigned int x = 0; x < width; x += 4)
+		for (unsigned int x = 0; x < width; x += batch)
 		{
-			SSEFloat sseX = _mm_set1_ps(x);
+			SSEFloat sseX = aj_set1_ps(x);
 
-			rayPacket.directionX = _mm_mul_ps(_mm_sub_ps(_mm_add_ps(sseX, a), halfX), pixelWidth);
-			rayPacket.directionY = _mm_sub_ps(_mm_setzero_ps(), _mm_mul_ps(_mm_sub_ps(sseY, halfY), pixelHeight));
+			rayPacket.directionX = aj_mul_ps(aj_sub_ps(aj_add_ps(sseX, batch_indexes), halfX), pixelWidth);
+			rayPacket.directionY = aj_sub_ps(aj_setzero_ps(), aj_mul_ps(aj_sub_ps(sseY, halfY), pixelHeight));
 
-			rayPacket.directionZ = _mm_set1_ps(defaultNearClip);
-			rayPacket.positionX = _mm_setzero_ps();
-			rayPacket.positionY = _mm_setzero_ps();
-			rayPacket.positionZ = _mm_setzero_ps();
+			rayPacket.directionZ = aj_set1_ps(defaultNearClip);
+			rayPacket.positionX = aj_setzero_ps();
+			rayPacket.positionY = aj_setzero_ps();
+			rayPacket.positionZ = aj_setzero_ps();
 
 			NormalizeSSE(rayPacket.directionX, rayPacket.directionY, rayPacket.directionZ);
 
-			colourPacket.red = _mm_setzero_ps();
-			colourPacket.green = _mm_setzero_ps();
-			colourPacket.blue = _mm_setzero_ps();
+			colourPacket.red = aj_setzero_ps();
+			colourPacket.green = aj_setzero_ps();
+			colourPacket.blue = aj_setzero_ps();
 
 			// Raytrace the packet of four rays
 			raytrace(colourPacket, rayPacket, 0, x, y);
 
-			colourPacket.red = _mm_mul_ps(colourPacket.red, twoFiftyFive);
-			colourPacket.green = _mm_mul_ps(colourPacket.green, twoFiftyFive);
-			colourPacket.blue = _mm_mul_ps(colourPacket.blue, twoFiftyFive);
+			colourPacket.red = aj_mul_ps(colourPacket.red, twoFiftyFive);
+			colourPacket.green = aj_mul_ps(colourPacket.green, twoFiftyFive);
+			colourPacket.blue = aj_mul_ps(colourPacket.blue, twoFiftyFive);
 
-			colourPacket.red = _mm_min_ps(colourPacket.red, twoFiftyFive);
-			colourPacket.green = _mm_min_ps(colourPacket.green, twoFiftyFive);
-			colourPacket.blue = _mm_min_ps(colourPacket.blue, twoFiftyFive);
+			colourPacket.red = aj_min_ps(colourPacket.red, twoFiftyFive);
+			colourPacket.green = aj_min_ps(colourPacket.green, twoFiftyFive);
+			colourPacket.blue = aj_min_ps(colourPacket.blue, twoFiftyFive);
 
 			AJRGB *pixelPtr = pixelData + (x + y * width);
 
-			for (unsigned int i = 0; i < 4; i++)
+			for (unsigned int i = 0; i < batch; i++)
 			{
 				pixelPtr[i].red = (uint8_t) asFloatArray(colourPacket.red)[i];
 				pixelPtr[i].green = (uint8_t) asFloatArray(colourPacket.green)[i];
@@ -548,9 +543,9 @@ void RTSphere::ReflectRayAtPoint(const SSEFloat &rayDirX, const SSEFloat &rayDir
 								 SSEFloat &reflectedX, SSEFloat &reflectedY, SSEFloat &reflectedZ) const
 {
 	// Calculate the sphere normal at this point;
-	SSEFloat normalX = _mm_sub_ps(intPointX, _mm_set_ps1(position.x));
-	SSEFloat normalY = _mm_sub_ps(intPointY, _mm_set_ps1(position.y));
-	SSEFloat normalZ = _mm_sub_ps(intPointZ, _mm_set_ps1(position.z));
+	SSEFloat normalX = aj_sub_ps(intPointX, aj_set1_ps(position.x));
+	SSEFloat normalY = aj_sub_ps(intPointY, aj_set1_ps(position.y));
+	SSEFloat normalZ = aj_sub_ps(intPointZ, aj_set1_ps(position.z));
 
 	// Normalise the sphere normal.
 	NormalizeSSE(normalX, normalY, normalZ);
@@ -562,8 +557,8 @@ void RTSphere::ReflectRayAtPoint(const SSEFloat &rayDirX, const SSEFloat &rayDir
 	NormalizeSSE(reflectedX, reflectedY, reflectedZ);
 }
 
-SSEFloat minusOne = _mm_set_ps1(-1);
-SSEFloat two = _mm_set_ps1(2);
+SSEFloat minusOne = aj_set1_ps(-1);
+SSEFloat two = aj_set1_ps(2);
 
 // An SSE-optimised version of an already optimised ray-sphere intersection
 // algorithm. Also taken from PixelMachine at www.superjer.com.
@@ -572,51 +567,51 @@ SSEFloat RTSphere::IntersectTest(const Ray &rays) const
 {
 	SSEFloat t = minusOne;
 
-	SSEFloat sPosX = _mm_set_ps1(position.x);
-	SSEFloat sPosY = _mm_set_ps1(position.y);
-	SSEFloat sPosZ = _mm_set_ps1(position.z);
+	SSEFloat sPosX = aj_set1_ps(position.x);
+	SSEFloat sPosY = aj_set1_ps(position.y);
+	SSEFloat sPosZ = aj_set1_ps(position.z);
 
-	SSEFloat ox = _mm_sub_ps(rays.positionX, sPosX);
-	SSEFloat oy = _mm_sub_ps(rays.positionY, sPosY);
-	SSEFloat oz = _mm_sub_ps(rays.positionZ, sPosZ);
+	SSEFloat ox = aj_sub_ps(rays.positionX, sPosX);
+	SSEFloat oy = aj_sub_ps(rays.positionY, sPosY);
+	SSEFloat oz = aj_sub_ps(rays.positionZ, sPosZ);
 
-	SSEFloat rDirXS = _mm_mul_ps(rays.directionX, rays.directionX);
-	SSEFloat rDirYS = _mm_mul_ps(rays.directionY, rays.directionY);
-	SSEFloat rDirZS = _mm_mul_ps(rays.directionZ, rays.directionZ);
+	SSEFloat rDirXS = aj_mul_ps(rays.directionX, rays.directionX);
+	SSEFloat rDirYS = aj_mul_ps(rays.directionY, rays.directionY);
+	SSEFloat rDirZS = aj_mul_ps(rays.directionZ, rays.directionZ);
 
-	SSEFloat a = _mm_mul_ps(_mm_add_ps(_mm_add_ps(rDirXS, rDirYS), rDirZS), two);
+	SSEFloat a = aj_mul_ps(aj_add_ps(aj_add_ps(rDirXS, rDirYS), rDirZS), two);
 
-	SSEFloat rDirOx = _mm_mul_ps(rays.directionX, ox);
-	SSEFloat rDirOy = _mm_mul_ps(rays.directionY, oy);
-	SSEFloat rDirOz = _mm_mul_ps(rays.directionZ, oz);
+	SSEFloat rDirOx = aj_mul_ps(rays.directionX, ox);
+	SSEFloat rDirOy = aj_mul_ps(rays.directionY, oy);
+	SSEFloat rDirOz = aj_mul_ps(rays.directionZ, oz);
 
-	SSEFloat b = _mm_add_ps(rDirOx, rDirOy);
-	b = _mm_add_ps(b, rDirOz);
-	b = _mm_mul_ps(b, two);
+	SSEFloat b = aj_add_ps(rDirOx, rDirOy);
+	b = aj_add_ps(b, rDirOz);
+	b = aj_mul_ps(b, two);
 
-	ox = _mm_mul_ps(ox, ox);
-	oy = _mm_mul_ps(oy, oy);
-	oz = _mm_mul_ps(oz, oz);
+	ox = aj_mul_ps(ox, ox);
+	oy = aj_mul_ps(oy, oy);
+	oz = aj_mul_ps(oz, oz);
 
-	SSEFloat c = _mm_add_ps(ox, oy);
-	c = _mm_add_ps(c, oz);
-	c = _mm_sub_ps(c, radiusSq);
+	SSEFloat c = aj_add_ps(ox, oy);
+	c = aj_add_ps(c, oz);
+	c = aj_sub_ps(c, radiusSq);
 
-	SSEFloat twoac = _mm_mul_ps(_mm_mul_ps(a, c), two);
+	SSEFloat twoac = aj_mul_ps(aj_mul_ps(a, c), two);
 
-	SSEFloat d = _mm_sub_ps(_mm_mul_ps(b, b), twoac);
+	SSEFloat d = aj_sub_ps(aj_mul_ps(b, b), twoac);
 
-	SSEFloat answerUnknownMask = _mm_cmpge_ps(d, _mm_setzero_ps());
+	SSEFloat answerUnknownMask = aj_cmpge_ps(d, aj_setzero_ps());
 
-	SSEFloat one = _mm_set_ps1(1);
-	a = _mm_div_ps(one, a);
-	d = _mm_sqrt_ps(d);
+	SSEFloat one = aj_set1_ps(1);
+	a = aj_div_ps(one, a);
+	d = aj_sqrt_ps(d);
 
-	SSEFloat newerT = _mm_mul_ps(_mm_sub_ps(_mm_sub_ps(_mm_setzero_ps(), d), b), a);
+	SSEFloat newerT = aj_mul_ps(aj_sub_ps(aj_sub_ps(aj_setzero_ps(), d), b), a);
 	t = Select(t, newerT, answerUnknownMask);
 
-	answerUnknownMask = _mm_cmplt_ps(t, _mm_setzero_ps());
+	answerUnknownMask = aj_cmplt_ps(t, aj_setzero_ps());
 
-	newerT = _mm_mul_ps(_mm_sub_ps(d, b), a);
+	newerT = aj_mul_ps(aj_sub_ps(d, b), a);
 	return Select(t, newerT, answerUnknownMask);
 }

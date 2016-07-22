@@ -1,8 +1,6 @@
 #pragma once
 
-#include <xmmintrin.h>
-
-typedef __m128 SSEFloat;
+#include "sse.h"
 
 struct V3
 {
@@ -21,9 +19,9 @@ struct SSERGB
 {
 	SSERGB(float r, float g, float b)
 	{
-		red = _mm_set1_ps(r);
-		green = _mm_set1_ps(g);
-		blue = _mm_set1_ps(b);
+		red = aj_set1_ps(r);
+		green = aj_set1_ps(g);
+		blue = aj_set1_ps(b);
 	}
 
 	SSEFloat red, green, blue;
@@ -56,7 +54,7 @@ public:
 	RTSphere(const V3 &_position, const float _radius, const SSERGB &_colour,
 			 float _specular = 0, float _reflection = 0, float _diffuse = 1) :
 			position(_position), colour(_colour), radius(_radius),
-			diffuse(_diffuse), specular(_specular), reflection(_reflection), radiusSq(_mm_set1_ps(_radius * _radius))
+			diffuse(_diffuse), specular(_specular), reflection(_reflection), radiusSq(aj_set1_ps(_radius * _radius))
 	{};
 	
 	const V3 &GetPosition()
