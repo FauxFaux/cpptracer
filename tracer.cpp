@@ -1,3 +1,4 @@
+#include <atomic>
 #include <thread>
 #include <boost/ptr_container/ptr_vector.hpp>
 
@@ -5,7 +6,6 @@
 #include "tracer.h"
 
 using std::thread;
-using std::bind;
 
 const float EPSILON = 0.001f;
 const float defaultViewportWidth = 0.1f;
@@ -442,8 +442,7 @@ void raytrace(SSERGB &colour, const Ray &rays, const int iteration, const int w,
 
 void render(AJRGB *pixelData,
 			const uint32_t width, const uint32_t height,
-			const uint32_t threadID,
-			const uint32_t numThreads)
+			std::atomic_int& next)
 {
 	// Calculate the height of the viewport depending on its width and the aspect
 	// ratio of the image.
@@ -467,8 +466,13 @@ void render(AJRGB *pixelData,
 	SSERGB colourPacket(0, 0, 0);
 
 	// Scanning across in rows from the top
-	for (unsigned int y = threadID; y < height; y += numThreads)
+	while (true)
 	{
+		int y = next++;
+		if (y >= height) {
+			break;
+		}
+
 		SSEFloat sseY = aj_set1_ps(y);
 
 		// Four pixels at a time.
@@ -527,9 +531,11 @@ void startRender(AJRGB *pixelData, const int width, const int height, int numThr
 		}
 #else
 	boost::ptr_vector<thread> threads;
+	std::atomic_int row;
+	row = 0;
 
 	for (int t = 0; t < numThreads; ++t)
-		threads.push_back(new thread(std::bind(&render, pixelData, width, height, t, numThreads)));
+		threads.push_back(new thread([&]{render(pixelData, width, height, row);}));
 
 	for (std::thread &t : threads)
 		t.join();

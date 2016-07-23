@@ -141,7 +141,7 @@ int main(int argc, char *argv[])
 				writeBitmap(pixelData, width, height, i);
 		}
 
-	std::cout << "Interleaved version." << std::endl;
+	std::cout << "Atomic row read, 256bit AVX version." << std::endl;
 	std::cout << setw(4) << right << "Lowest: " << overall_lowest.count() << "ms at " << lowestThreads << " threads."
 			  << std::endl;
 
